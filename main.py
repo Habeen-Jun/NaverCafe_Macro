@@ -8,7 +8,6 @@ from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtCore import *
 import time 
 from dbmodel import dbmodel
-from text_to_html import text_to_html
 from naverposting import Naver_Posting
 import threading
 from processkill import kill_process

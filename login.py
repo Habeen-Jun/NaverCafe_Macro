@@ -11,8 +11,8 @@ import time
 
 
 # Qtdesigner로 생성한 ui불러옴 
-login_class = uic.loadUiType("/Users/apple/python/navercafe_macro/login.ui")[0]
-main_class = uic.loadUiType("/Users/apple/python/navercafe_macro/macro0704.ui")[0]
+login_class = uic.loadUiType("C://pythonclass//navercafe_macro//NaverCafe_Macro//login.ui")[0]
+main_class = uic.loadUiType("C://pythonclass//navercafe_macro//NaverCafe_Macro//macro0704.ui")[0]
 
 class LoginWindow(QMainWindow, login_class):
     def __init__(self):
