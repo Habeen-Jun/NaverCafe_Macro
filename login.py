@@ -11,8 +11,8 @@ import time
 
 
 # Qtdesigner로 생성한 ui불러옴 
-login_class = uic.loadUiType("C://pythonclass//navercafe_macro//NaverCafe_Macro//login.ui")[0]
-main_class = uic.loadUiType("C://pythonclass//navercafe_macro//NaverCafe_Macro//macro0704.ui")[0]
+login_class = uic.loadUiType("login.ui")[0]
+main_class = uic.loadUiType("macro0704.ui")[0]
 
 class LoginWindow(QMainWindow, login_class):
     def __init__(self):
@@ -33,7 +33,7 @@ class LoginWindow(QMainWindow, login_class):
             result = conn.execute('select * from users where id = ? and pw = ?',(ID,PW))
             if len(result.fetchall()) > 0:
                 QMessageBox.information(self, 'congrats','로그인 성공!')
-                import main
+                import naverlogin
                 self.hide()
             else: 
                 QMessageBox.information(self, 'alert','아이디와 패스워드를 확인해주세요')

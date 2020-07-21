@@ -13,7 +13,8 @@ import threading
 from processkill import kill_process
 
 # Qtdesigner로 생성한 ui불러옴 
-form_class = uic.loadUiType("/Users/apple/python/navercafe_macro/macro0704.ui")[0]
+form_class = uic.loadUiType("C://pythonclass//navercafe_macro//NaverCafe_Macro//macro0704.ui")[0]
+form_class = uic.loadUiType("macro0704.ui")[0]
 
 
 class MyThread:
