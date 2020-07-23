@@ -1,94 +1,43 @@
+from selenium import webdriver
+import time
+from PyQt5.QtCore import * 
+from PyQt5 import QtCore
+class Naverlogin(QtCore.QThread):
 
-import sys
-import sqlite3
-from PyQt5.QtWidgets import *
-from PyQt5 import uic
-from PyQt5.QtCore import QCoreApplication
-from PyQt5.QtCore import *
-import time 
-from naverposting import Naver_Posting
-import threading
-
-
-
-# Qtdesigner로 생성한 ui불러옴 
-login_class = uic.loadUiType("naverlogin.ui")[0]
-
-
-class NaverLoginWindow(QMainWindow, login_class):
-    switch_window = pyqtSignal()
+    # finished = pyqtSignal(object)
+    finished = pyqtSignal(object)
 
     def __init__(self):
-        super().__init__()
-        self.setupUi(self)
-        self.pushButton.clicked.connect(self.loginproccess)
-        self.login_OK = False
-
-    def loginproccess(self):
-        # ID = self.lineEdit.text()
-        # PW = self.lineEdit_2.text()
-
-        # if ID == '':
-        #     QMessageBox.information(self,'alert','아이디를 입력해주세요')
-        # elif PW == '':
-        #     QMessageBox.information(self,'alert','패스워드를 입력해주세요')
-        # else:
-        #     self.naver = Naver_Posting(self,ID,PW)
-        #     driver = self.naver.driver
-        #     self.category_list = self.naver.category_list
-        #     print(driver)
-        #     print(self.category_list)
-            # t = threading.Thread(target=Naver_Posting, args=(self,ID,PW))
-            # t.start()
-            # print(type(self.naver))
-            # self.naver = threading.Thread(target=Naver_Posting(self,ID,PW)).start()
-            # self.set_category()
-            # t.join()
-            QMessageBox.information(self,'congrats','로그인 성공')
-            self.login_OK = True
-            self.toMainWindow()
-            # self.hide()
-
-
-            # import main
-            # app = QApplication(sys.argv)
-            # myWindow = MyWindow()
-            # myWindow.show()
-            # app.exec_()
-            # try:
-            #     # self.naver = Naver_Posting(self,ID,PW)
-            #     self.naver = threading.Thread(target=Naver_Posting, args=(self,ID,PW)).start()
-            #     print(type(self.naver))
-            #     # self.naver = threading.Thread(target=Naver_Posting(self,ID,PW)).start()
-            #     # self.set_category()
-            #     QMessageBox.information(self,'congrats','로그인 성공')
-            #     self.login_OK = True
-            #     self.hide()
-            #     import main
-            # except:
-            #     QMessageBox.information(self,'alert','로그인 실패')
-    def toMainWindow(self):
-        # sys.exit()
-        # QCoreApplication.instance().quit
-        # self.close()
+        QThread.__init__(self)
+        print("worker thread created!")
         
-        # import main
-        # app1 = QApplication(sys.argv)
-        # mywindow = MyWindow()
-        # mywindow.show()
-        # app1.exec_()
-        self.switch_window.emit()
-        # win = MyWindow()
-        # win.showModal()
-        print('메인 윈도우로~')
-        # self.close()
+    def run(self,ID,PW):
+        
+        print('thread running..')
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    mywindow = NaverLoginWindow()
-    mywindow.show()
-    app.exec_()
+        options = webdriver.ChromeOptions()
+        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko")
+        #options.add_argument("headless")
+        self.driver = webdriver.Chrome('chromedriver',options=options)
+        url = 'https://nid.naver.com/nidlogin.login?mode=form&url=https%3A%2F%2Fwww.naver.com'
+        # 네이버 로그인 url 접속
+        self.driver.get(url)
+        # 캡챠(봇 감지) 우회를 위해 execute_script 함수로 id, pw 입력
+        self.driver.execute_script("document.getElementsByName('id')[0].value='" + ID + "'")
+        time.sleep(0.5)
+        self.driver.execute_script("document.getElementsByName('pw')[0].value='" + PW + "'")
+        time.sleep(0.5)
+        # 로그인 버튼을 찾아 클릭
+        self.driver.find_element_by_xpath('//*[@id="log.login"]').click()
+        print('login success')
+        
+        self.finished.emit(self.driver)
+
+    # def run(self):
+    #     print('thread runnning')
+    #     self.login()
+        # self.finished.emit(self.driver)
+if __name__ =='__main__':
+    t = Naverlogin('junhabeen', 'wjsgkqls123')
+    t.start()
     
-    
-    # myWindow.naver.driver.close()
-    # kill_process('chromedriver')

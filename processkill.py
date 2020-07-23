@@ -18,3 +18,4 @@ def kill_process(process_name):
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):   #예외처리
             pass
  
+#kill_process('chromedriver')

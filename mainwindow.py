@@ -12,9 +12,11 @@ from naverposting import Naver_Posting
 import threading
 from processkill import kill_process
 from multiprocessing import Process
+from multiprocessing.pool import ThreadPool
+
 
 # Qtdesigner로 생성한 ui불러옴 
-form_class = uic.loadUiType("/Users/apple/python/navercafe_macro/macro0704.ui")[0]
+form_class = uic.loadUiType("macro0704.ui")[0]
 
 
 class MyThread:
@@ -23,7 +25,8 @@ class MyThread:
         naver.post(interval, option_data, item_list)
         while not self.stop_event.is_set():
             t = threading.Timer(total_interval,self.job, args=(naver,total_interval,interval,option_data,item_list))
-            t.start() 
+            t.start()
+            t.join()
     def do_job_once(self, naver, interval, option_data, item_list):
         naver.post(interval, option_data, item_list)
     def stop(self):
@@ -31,42 +34,9 @@ class MyThread:
         # Tell the thread to stop...
         self.stop_event.set()
         # Wait for the thread to stop
-        self.join()
+        self.t.join()
         print("thread stopped")
 
-
-class MyThread_test(threading.Thread):
-    def __init__(self,naver,total_interval,interval,option_data, item_list):
-        self.naver = naver
-        self.total_interval = total_interval
-        self.interval = interval
-        self.option_data = option_data
-        self.item_list = item_list
-    
-    def run(self):
-        self.stop_event = threading.Event()
-        while not self.stop_event.is_set():
-            self.naver.post(self.interval, self.option_data, self.item_list)
-            time.sleep(self.total_interval)
-
-    def job(self,naver,total_interval,interval,option_data, item_list):
-        self.stop_event = threading.Event()
-        # naver.post(interval, option_data, item_list)
-        while not self.stop_event.is_set():
-            naver.post(interval, option_data, item_list)
-            time.sleep(total_interval)
-            # t = threading.Timer(total_interval,self.job, args=(naver,total_interval,interval,option_data,item_list))
-            # t.start() 
-    def do_job_once(self, naver, interval, option_data, item_list):
-        naver.post(interval, option_data, item_list)
-    def stop(self):
-        
-        self.stop_event = threading.Event()
-        # Tell the thread to stop...
-        self.stop_event.set()
-        # Wait for the thread to stop
-        self.join()
-        print("thread stopped")
 
 def main(naver,total_interval,interval,option_data,item_list):
     mt = MyThread()
@@ -88,7 +58,8 @@ class MyWindow(QMainWindow, form_class):
         self.setupUi(self)
   
         conn = dbmodel()
-    
+
+        # database 정보로드
         self.tableWidget = conn.load_data(self.tableWidget)
 
         # tabwidget 메뉴 설정  
@@ -96,21 +67,23 @@ class MyWindow(QMainWindow, form_class):
         self.tabWidget.setTabText(1,'게시글 등록')
 
         self.tabWidget_2.setTabText(0,'새 글 등록')
-        self.tabWidget_2.setTabText(1,'등록된 글')
+        self.tabWidget_2.setTabText(1,'게시글 목록')
 
         # checkbox 디폴트 체크
         self.checkBox.setChecked(True)
         self.checkBox_2.setChecked(True)
         self.checkBox_3.setChecked(True)
-        self.checkBox_4.setChecked(True)
+        self.checkBox_4.setChecked(False)
         self.checkBox_5.setChecked(True)
-        self.checkBox_6.setChecked(True)
-        self.checkBox_7.setChecked(True)
+        self.checkBox_6.setChecked(False)
+        self.checkBox_7.setChecked(False)
 
         self.checkBox_9.setChecked(True)
 
-        # 전체 대기시간 디폴트 30초 
-        self.lineEdit_5.setText('30')
+        # 작업 대기시간 디폴트 5
+        self.lineEdit_2.setText('5')
+        # 전체 대기시간 디폴트 10초 
+        self.lineEdit_5.setText('10')
 
         
         # 게시글 테이블
@@ -135,36 +108,21 @@ class MyWindow(QMainWindow, form_class):
         stop_button = self.pushButton_9
         stop_button.clicked.connect(self.stop_process)
 
-        login_button = self.pushButton_5
-        login_button.clicked.connect(self.login_process)
+ 
+        # 선택 카페 바뀌었을 때 해당 메뉴도 동적으로 바꿔줌.
+        self.comboBox.insertItem(0,'중고나라')
+        self.comboBox.insertItem(1,'중고폰나라')
+        self.comboBox.currentIndexChanged.connect(self.change_category_data)
+        
+       
+    def change_category_data(self):
+        print('cafe changed')
+        cafe = self.comboBox
 
-    def login_process(self):
-        ID = self.lineEdit_3.text()
-        PW = self.lineEdit_10.text()
-
-        if ID == '':
-            QMessageBox.information(self,'alert','아이디를 입력해주세요')
-        elif PW == '':
-            QMessageBox.information(self,'alert','패스워드를 입력해주세요')
+        if cafe.currentIndex() == 0:
+            self.set_category(self.joongo_menus)
         else:
-            self.naver = Naver_Posting(self,ID,PW)
-            # self.naver = threading.Thread(target=Naver_Posting, args=(self,ID,PW)).start()
-            print(type(self.naver))
-            # self.naver = threading.Thread(target=Naver_Posting(self,ID,PW)).start()
-            self.set_category()
-            QMessageBox.information(self,'congrats','로그인 성공')
-            self.login_OK = True
-            # try:
-            #     self.naver = Naver_Posting(self,ID,PW)
-            #     # self.naver = threading.Thread(target=Naver_Posting, args=(self,ID,PW)).start()
-            #     print(type(self.naver))
-            #     # self.naver = threading.Thread(target=Naver_Posting(self,ID,PW)).start()
-            #     self.set_category()
-            #     QMessageBox.information(self,'congrats','로그인 성공')
-            #     self.login_OK = True
-            # except:
-            #     QMessageBox.information(self,'alert','로그인 실패')
-
+            self.set_category(self.joongophone_menus)
 
     def check_option(self):
         allow_comments = self.checkBox.isChecked()
@@ -193,80 +151,76 @@ class MyWindow(QMainWindow, form_class):
 
     def post(self):
         """글등록 데이터 naverposting의 post함수 연결  """
-        # 로그인 여부 체크
-        ID = self.lineEdit_3.text()
-        PW = self.lineEdit_10.text()
-        total_interval = 0
-
-        if self.login_OK == False:
-            QMessageBox.information(self,"alert",'먼저 로그인 해주세요')
-        else:
         #생성자 로그인 창 닫쳤을 경우 네이버 창 재 생성 
+        try:
+            print('창 있음')
+            self.naver
+        except AttributeError as e:
+            pass
+            # print('네이버 창 다시 생성')
+            # self.naver =Naver_Posting(self,ID,PW)
+            # # self.naver = threading.Thread(target=Naver_Posting, args=(self,ID,PW))
+            # print(type(self.naver))
+            # # self.naver = threading.Thread(target=Naver_Posting(self,ID,PW))
+            # self.set_category()
+
+
+        rows = self.tableWidget.rowCount()
+
+        item_list = []
+        checked_rows = []
+        for row in range(rows):
+            # check if a row is checked 
+            checkbox =self.tableWidget.cellWidget(row,0).isChecked()
+            if checkbox == True:
+                checked_rows.append(row)
+
+
+        print(checkbox)
+        print(checked_rows)
+
+        # 시간 설정 예외 처리
+        if checked_rows != []:
             try:
-                print('창 있음')
-                self.naver
-            except AttributeError as e:
-                print('네이버 창 다시 생성')
-                self.naver =Naver_Posting(self,ID,PW)
-                # self.naver = threading.Thread(target=Naver_Posting, args=(self,ID,PW))
-                print(type(self.naver))
-                # self.naver = threading.Thread(target=Naver_Posting(self,ID,PW))
-                self.set_category()
-
-
-            rows = self.tableWidget.rowCount()
-
-            item_list = []
-            checked_rows = []
-            for row in range(rows):
-                # check if a row is checked 
-                checkbox =self.tableWidget.cellWidget(row,0).isChecked()
-                if checkbox == True:
-                    checked_rows.append(row)
-
-
-            print(checkbox)
-            print(checked_rows)
-
-            # 시간 설정 예외 처리
-            if checked_rows != []:
-                try:
-                    interval = int(self.lineEdit_2.text())
-                    # 반복작업체크                    
-                    if self.checkBox_9.isChecked():
-                        try:
-                            total_interval = int(self.lineEdit_5.text())
-                        except:
-                            QMessageBox.information(self,'Alert!','반복작업을 체크하셨습니다. 전체 대기 시간을 설정해주세요.')
-                            raise Exception('again')
-
-                    for row in checked_rows:
-                        option_data = self.check_option()
-                        row_data = self.get_all_rowitems(row)
-                        item_list.append(row_data)
-
-                    print(item_list)
-                    # threading.Thread(target=main,args=(self.naver,total_interval,interval,option_data,item_list)).start()
-
+                interval = int(self.lineEdit_2.text())
+                # 반복작업체크                    
+                if self.checkBox_9.isChecked():
                     try:
-                        if total_interval == 0:
-                            self.textBrowser.append('한 번 만 작업')
-                        ### multiprocessing 사용하면 로그 창에 진행 상황 못 띄움..
-                        # self.p = Process(target=main,args=(self.naver,total_interval,interval,option_data,item_list))
-                        # self.p.start()
-                        ## 쓰레드 사용하면 작업 terminate 이 안됨.
-                        # self.t = threading.Thread(target=main,args=(self.naver,total_interval,interval,option_data,item_list))
-                        # self.t.start()
-                        self.t = MyThread_test(self.naver,total_interval,interval,option_data,item_list)
-                        self.t.start()
-
+                        total_interval = int(self.lineEdit_5.text())
                     except:
-                        self.naver.driver.close()
-                        QMessageBox.information(self,'작업오류','작업오류')
+                        QMessageBox.information(self,'Alert!','반복작업을 체크하셨습니다. 전체 대기 시간을 설정해주세요.')
+                        raise Exception('again')
+
+                for row in checked_rows:
+                    option_data = self.check_option()
+                    row_data = self.get_all_rowitems(row)
+                    item_list.append(row_data)
+
+                print(item_list)
+                self.naver.set_window(self)
+                # self.t = threading.Thread(target=self.naver.post, args=(self, interval, option_data, item_list))
+                # self.t.start()
+                # self.t.join()
+                # print('작업끝!')
+
+                try:
+                    if total_interval == 0:
+                        self.textBrowser.append('한 번 만 작업')
+                    ### multiprocessing 사용하면 로그 창에 진행 상황 못 띄움..
+                    # self.p = Process(target=main,args=(self.naver,total_interval,interval,option_data,item_list))
+                    # self.p.start()
+                    ## 쓰레드 사용하면 작업 terminate 이 안됨.
+                    self.t = threading.Thread(target=main,args=(self.naver,total_interval,interval,option_data,item_list))
+                    self.t.start()
+            
+
                 except:
-                    QMessageBox.information(self,"작업대기시간을 입력하세요","작업대기시간을 입력하세요")
-            else:
-                QMessageBox.information(self,"등록할 글을 선택해주세요","등록할 글을 선택해주세요")
+                    self.naver.driver.close()
+                    QMessageBox.information(self,'작업오류','작업오류')
+            except:
+                QMessageBox.information(self,"작업대기시간을 입력하세요","작업대기시간을 입력하세요")
+        else:
+            QMessageBox.information(self,"등록할 글을 선택해주세요","등록할 글을 선택해주세요")
             
 
     def get_all_rowitems(self,row):
@@ -408,15 +362,25 @@ class MyWindow(QMainWindow, form_class):
         else:
             QMessageBox.information(self,"작업이 이미 중지 되었습니다.","작업이 이미 중지 되었습니다")
 
-
-    def set_category(self):
+    def set_category(self, cafemenulist):
         """
-        네이버 카페가서 모든 카테고리 크롤링 후 combobox에 구현 
+        get_cafemenu로 얻은 메뉴 리스트 combobox에 구현 
         """
-        categorys = self.naver.get_category()
         self.comboBox_2.clear() 
-        for cate in categorys:
+        for cate in cafemenulist:
             self.comboBox_2.addItem(cate)
+
+    def get_cafemenu(self):
+        """
+        여기에 카페 추가
+        """
+        self.joongo_menus = self.naver.get_category('중고나라')
+        self.joongophone_menus = self.naver.get_category('중고폰나라')
+    
+    def set_driver(self, driver):
+        self.driver = driver
+        self.naver = Naver_Posting(self, self.driver)
+        self.get_cafemenu()
 
 
 if __name__ == "__main__":

@@ -25,7 +25,7 @@
     <item row="2" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -188,52 +188,6 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="gridLayoutWidget_2">
-        <property name="geometry">
-         <rect>
-          <x>610</x>
-          <y>190</y>
-          <width>160</width>
-          <height>115</height>
-         </rect>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_6">
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_16">
-           <property name="text">
-            <string>ID</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QLineEdit" name="lineEdit_3"/>
-         </item>
-         <item row="2" column="1">
-          <widget class="QLineEdit" name="lineEdit_10"/>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_17">
-           <property name="text">
-            <string>PW</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QPushButton" name="pushButton_5">
-           <property name="text">
-            <string>로그인</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0" colspan="2">
-          <widget class="QLabel" name="label_18">
-           <property name="text">
-            <string>네이버 로그인 </string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
       </widget>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
@@ -373,21 +327,17 @@
            </rect>
           </property>
           <layout class="QGridLayout" name="gridLayout">
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_8">
-             <property name="text">
-              <string>작업시작시간</string>
-             </property>
-            </widget>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="lineEdit_6"/>
            </item>
-           <item row="2" column="0">
+           <item row="1" column="0">
             <widget class="QLabel" name="label_9">
              <property name="text">
               <string>태그</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="0">
+           <item row="0" column="0">
             <widget class="QLabel" name="label_12">
              <property name="text">
               <string>판매가</string>
@@ -395,13 +345,7 @@
             </widget>
            </item>
            <item row="1" column="1">
-            <widget class="QLineEdit" name="lineEdit_6"/>
-           </item>
-           <item row="2" column="1">
             <widget class="QLineEdit" name="lineEdit_7"/>
-           </item>
-           <item row="0" column="1">
-            <widget class="QTimeEdit" name="timeEdit"/>
            </item>
           </layout>
          </widget>
@@ -440,13 +384,7 @@
             <widget class="QLineEdit" name="lineEdit_4"/>
            </item>
            <item row="1" column="1">
-            <widget class="QComboBox" name="comboBox">
-             <item>
-              <property name="text">
-               <string>중고폰나라</string>
-              </property>
-             </item>
-            </widget>
+            <widget class="QComboBox" name="comboBox"/>
            </item>
            <item row="2" column="1">
             <widget class="QComboBox" name="comboBox_2"/>

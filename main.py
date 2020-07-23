@@ -1,9 +1,9 @@
 import sys
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from naverlogin import NaverLoginWindow
+from naverloginwindow import NaverLoginWindow
 from mainwindow import MyWindow
-from login import LoginWindow
+from loginwindow import LoginWindow
 
 
 
@@ -19,19 +19,20 @@ class Controller:
     
     def show_naverlogin(self):
         self.naverlogin = NaverLoginWindow()
-        self.login.close()
+        # self.login.close()
         self.naverlogin.switch_window.connect(self.show_main)
         self.naverlogin.show()
 
     def show_main(self):
         self.window = MyWindow()
+        self.window.set_driver(self.naverlogin.driver)
         self.naverlogin.close()
         self.window.show()
 
 def main():
     app = QApplication(sys.argv)
     controller = Controller()
-    controller.show_login()
+    controller.show_naverlogin()
     sys.exit(app.exec_())
 
 if __name__ == "__main__":

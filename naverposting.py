@@ -2,23 +2,17 @@ from selenium import webdriver
 import time
 from selenium.webdriver.common import keys
 from bs4 import BeautifulSoup
+import threading 
 
 
-class Naver_Posting:
+
+class Naver_Posting(threading.Thread):
     
-    def __init__(self,window,ID,PW):
+    def __init__(self,window,driver):
         self.window = window
-        options = webdriver.ChromeOptions()
-        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko")
-        #options.add_argument("headless")
-        driver = webdriver.Chrome('chromedriver',options=options)
-        # self.driver = self.NaverLogin(driver,'junhabeen','wjsgkqls123')
-        self.driver = self.NaverLogin(driver,ID,PW)
-        self.category_list = self.get_category()
-
+        self.driver = driver 
         self.stop_process = False 
         
-
     def post(self, interval, option_data, item_list):
         """
         option_data = 작업실행 시 체크리스트
@@ -37,6 +31,7 @@ class Naver_Posting:
             
 
                 driver = self.driver
+                print(driver)
                 
                 # driver.get('https://cafe.naver.com/realseller')
                 driver.get('https://cafe.naver.com/4uloveme.cafe')
@@ -202,13 +197,6 @@ class Naver_Posting:
         driver.execute_script(script, node, item['body'])
         self.window.textBrowser.append('본문 내용 입력 완료')
 
-
-
-        #img_insert b/w body tag 
-        img_element = """<img src="https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2F20160202_248%2Fceofus_1454363629379LVbMf_JPEG%2F20160201_190734.jpg&amp;type=b400" class="_img" alt="파이썬 자바 C 코딩 커뮤니티를 만들어 가는 겨울은 뜨겁게 코딩을 하며; ^^ @카페 다니엘 | 블로그" onerror="var we=$Element(this); we.addClass('bg_nimg'); we.attr('alt','이미지준비중'); we.attr('src','data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');" data-width="550" data-height="412" style="height: 176.175px; width: 235.185px; left: 0px; top: 0px; zoom: 1; opacity: 1;">"""
-        self.insert_img(img_element)
-
-
         driver.switch_to.default_content()
         driver.switch_to.frame("cafe_main")
 
@@ -316,10 +304,20 @@ class Naver_Posting:
             img_script = "arguments[0].insertAdjacentHTML('afterbegin', "+'"'+img_str+'"'+")"
             self.driver.execute_script("arguments[0].insertAdjacentHTML('afterbegin', "+'"'+img_str+'"'+")",node)
 
-    def get_category(self):
+    def get_category(self, cafe_name):
+
+        cafes = {
+            '중고나라':'joonggonara',
+            '중고폰나라':'4uloveme.cafe',
+        }
+
         driver = self.driver
-        driver.get('https://cafe.naver.com/4uloveme.cafe')
-        driver.get('https://cafe.naver.com/4uloveme.cafe')
+
+        cafe_baseurl = 'https://cafe.naver.com/'
+        cafe_plusurl = cafes[cafe_name]
+
+        driver.get(cafe_baseurl+cafe_plusurl)
+        # driver.get('https://cafe.naver.com/4uloveme.cafe')
 
 
         try:
@@ -327,10 +325,16 @@ class Naver_Posting:
         except:
             pass
 
-         # 카페 글등록 클릭
-        sample = driver.find_element_by_xpath('//*[@id="cafe-info-data"]/div[2]/a')
-        driver.execute_script("arguments[0].click();", sample)
-        driver.implicitly_wait(3)
+        # 카페 글등록 클릭 
+        try:
+            sample = driver.find_element_by_xpath('//*[@id="cafe-info-data"]/div[2]/a')
+            driver.execute_script("arguments[0].click();", sample)
+            driver.implicitly_wait(3)
+        except:
+            sample = driver.find_element_by_xpath('//*[@id="cafe-info-data"]/div[3]/a ')
+            driver.execute_script("arguments[0].click();", sample)
+            driver.implicitly_wait(3)
+
 
         # 카페 메인 프레임 진입 
         driver.switch_to.frame("cafe_main")
@@ -352,4 +356,6 @@ class Naver_Posting:
     def stop_process(self):
         self.stop_process = True
 
+    def set_window(self, window):
+        self.window = window
         
