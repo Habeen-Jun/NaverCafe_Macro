@@ -26,6 +26,8 @@ class Controller:
     def show_main(self):
         self.window = MyWindow()
         self.window.set_driver(self.naverlogin.driver)
+        self.window.set_ID(self.naverlogin.ID)
+        self.window.set_PW(self.naverlogin.PW)
         self.naverlogin.close()
         self.window.show()
 

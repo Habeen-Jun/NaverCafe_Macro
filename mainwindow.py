@@ -13,6 +13,7 @@ import threading
 from processkill import kill_process
 from multiprocessing import Process
 from multiprocessing.pool import ThreadPool
+from naverlogin import Naverlogin
 
 
 # Qtdesigner로 생성한 ui불러옴 
@@ -20,13 +21,18 @@ form_class = uic.loadUiType("macro0704.ui")[0]
 
 
 class MyThread:
+    def __init__(self,window):
+        self.window = window
+
     def job(self,naver,total_interval,interval,option_data, item_list):
         self.stop_event = threading.Event()
         naver.post(interval, option_data, item_list)
         while not self.stop_event.is_set():
-            t = threading.Timer(total_interval,self.job, args=(naver,total_interval,interval,option_data,item_list))
-            t.start()
-            t.join()
+            self.t = threading.Timer(total_interval,self.job, args=(naver,total_interval,interval,option_data,item_list))
+            self.t.start()
+            self.t.join()
+            self.window.textBrowser.append('작업종료')
+            
     def do_job_once(self, naver, interval, option_data, item_list):
         naver.post(interval, option_data, item_list)
     def stop(self):
@@ -34,7 +40,7 @@ class MyThread:
         # Tell the thread to stop...
         self.stop_event.set()
         # Wait for the thread to stop
-        self.t.join()
+        # self.t.join()
         print("thread stopped")
 
 
@@ -156,14 +162,19 @@ class MyWindow(QMainWindow, form_class):
             print('창 있음')
             self.naver
         except AttributeError as e:
-            pass
-            # print('네이버 창 다시 생성')
-            # self.naver =Naver_Posting(self,ID,PW)
-            # # self.naver = threading.Thread(target=Naver_Posting, args=(self,ID,PW))
-            # print(type(self.naver))
-            # # self.naver = threading.Thread(target=Naver_Posting(self,ID,PW))
-            # self.set_category()
-
+            print('창 없음')
+            print('재 생성')
+            self.thread = QThread()
+            self.thread.start()
+            self.test =Naverlogin()
+            print(self.ID)
+            print(self.PW)
+            self.test.set_ID(self.ID)
+            self.test.set_PW(self.PW)
+            self.test.moveToThread(self.thread)
+            self.test.finished.connect(self.reload_naverposting)
+            self.test.run()
+            
 
         rows = self.tableWidget.rowCount()
 
@@ -210,8 +221,15 @@ class MyWindow(QMainWindow, form_class):
                     # self.p = Process(target=main,args=(self.naver,total_interval,interval,option_data,item_list))
                     # self.p.start()
                     ## 쓰레드 사용하면 작업 terminate 이 안됨.
-                    self.t = threading.Thread(target=main,args=(self.naver,total_interval,interval,option_data,item_list))
+                    # self.t = threading.Thread(target=main,args=(self.naver,total_interval,interval,option_data,item_list))
+                    # self.t.start()
+                    self.mt = MyThread(self)
+                    self.t = threading.Thread(target=self.mt.job, args=(self.naver,total_interval,interval,option_data,item_list))
                     self.t.start()
+                    
+                    
+
+                    
             
 
                 except:
@@ -221,7 +239,16 @@ class MyWindow(QMainWindow, form_class):
                 QMessageBox.information(self,"작업대기시간을 입력하세요","작업대기시간을 입력하세요")
         else:
             QMessageBox.information(self,"등록할 글을 선택해주세요","등록할 글을 선택해주세요")
-            
+       
+       
+    @pyqtSlot(object,str,str)
+    def reload_naverposting(self,driver,ID,PW):
+        """
+        작업 중지 되었을 때 Naver_Posting 객체 리로딩 
+        """
+        self.driver = driver
+        self.naver = Naver_Posting(self, self.driver)
+
 
     def get_all_rowitems(self,row):
         """선택된 행의 모든 데이터 리스트로 리턴  """
@@ -346,9 +373,15 @@ class MyWindow(QMainWindow, form_class):
     def stop_process(self):
         reply = QMessageBox.question(self, 'question','정말로 모든 작업을 종료하시겠습니까?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
-            # self.p.terminate()
-            self.t.stop()
-            # self.naver.driver.close()
+            try:
+                del self.naver
+                del self.t
+                # del self.mt
+            except:
+                print('작업 중지 오류')
+            self.mt.stop()
+
+            kill_process('chromedriver')
             time.sleep(0.5)
             try:
                 self.naver.driver.switch_to.alert().dismiss()
@@ -381,6 +414,14 @@ class MyWindow(QMainWindow, form_class):
         self.driver = driver
         self.naver = Naver_Posting(self, self.driver)
         self.get_cafemenu()
+    
+    def set_ID(self,ID):
+        self.ID = ID 
+        print(f'새로 받은 아이디: {self.ID}')
+    
+    def set_PW(self,PW):
+        self.PW = PW 
+        print(f'새로 받은 비번: {self.PW}')
 
 
 if __name__ == "__main__":
