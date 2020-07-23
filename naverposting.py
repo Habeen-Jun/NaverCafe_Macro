@@ -14,7 +14,7 @@ class Naver_Posting:
         driver = webdriver.Chrome('chromedriver',options=options)
         # self.driver = self.NaverLogin(driver,'junhabeen','wjsgkqls123')
         self.driver = self.NaverLogin(driver,ID,PW)
-        self.get_category()
+        self.category_list = self.get_category()
 
         self.stop_process = False 
         
