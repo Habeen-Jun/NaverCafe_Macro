@@ -23,6 +23,7 @@ class Controller:
         self.naverlogin.switch_window.connect(self.show_main)
         self.naverlogin.show()
 
+     
     def show_main(self):
         self.window = MyWindow()
         self.window.set_driver(self.naverlogin.driver)
