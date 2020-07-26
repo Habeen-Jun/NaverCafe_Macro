@@ -1,8 +1,22 @@
 매크로 프로그램 아키텍쳐
 
-main.py - gui 실행 메인
-dbmodel.py - db 관련 메서드
-naverposting.py - posting 클래스 
+# ui shell
+ui files:
+    macro0704.ui
+    login.ui
+    naverlogin.ui
+# Gui 상 시그널 슬롯 연결 
+window files:
+    mainwindow.py
+    loginwindow.py
+    naverloginwindow.py
+# 브라우저에서 실제 동작하는 클래스 
+execution files:
+    main.py
+    login.py
+    naverlogin.py
+
+
 
 https://youtu.be/CPoqmHBxpr4
 
