@@ -14,6 +14,7 @@ from processkill import kill_process
 from multiprocessing import Process
 from multiprocessing.pool import ThreadPool
 from naverlogin import Naverlogin
+from success_stoppablethread import Stoppablethread
 
 
 # Qtdesigner로 생성한 ui불러옴 
@@ -226,6 +227,8 @@ class MyWindow(QMainWindow, form_class):
                     self.mt = MyThread(self)
                     self.t = threading.Thread(target=self.mt.job, args=(self.naver,total_interval,interval,option_data,item_list))
                     self.t.start()
+
+                    self.t = Stop
                     
                     
 
@@ -374,8 +377,8 @@ class MyWindow(QMainWindow, form_class):
         reply = QMessageBox.question(self, 'question','정말로 모든 작업을 종료하시겠습니까?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
             try:
-                del self.naver
-                del self.t
+                # del self.naver
+                # del self.t
                 # del self.mt
             except:
                 print('작업 중지 오류')
@@ -391,7 +394,7 @@ class MyWindow(QMainWindow, form_class):
                 self.naver.driver.switch_to.alert().accept()
             except:
                 pass
-            self.textBrowser.append('작업종료')
+            # self.textBrowser.append('작업종료')
         else:
             QMessageBox.information(self,"작업이 이미 중지 되었습니다.","작업이 이미 중지 되었습니다")
 
