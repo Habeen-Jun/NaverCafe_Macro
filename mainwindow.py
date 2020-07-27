@@ -273,21 +273,42 @@ class MyWindow(QMainWindow, form_class):
         """
         선택 아이템 삭제 
         """ 
-        try:
-            itemtable = self.tableWidget
-            row = itemtable.currentRow()
-            print(row)
-            id_ = itemtable.item(row, 8).text()
+        checkedrows_list = self.get_checked_rows_number()
 
-            print(id_)
-            conn = dbmodel()
-            conn.delete_item(id_)
-            print('deleted')
-            conn.load_data(itemtable)
-            conn.close()
-        except:
+        if checkedrows_list != []:
+            reply = QMessageBox.question(self, 'question','정말로 선택하신 행을 삭제하시겠습니까?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                itemtable = self.tableWidget
+                checkedrows_list = self.get_checked_rows_number()
+                print('checked rows : {}'.format(checkedrows_list))
+                delete_id_list  = []
+
+                for cheched_row in checkedrows_list:
+                    id_ = itemtable.item(cheched_row, 8).text()
+                    delete_id_list.append(id_)
+
+                for delete_id in delete_id_list:
+                    conn = dbmodel()
+                    conn.delete_item(delete_id)
+                    print('deleted')
+
+                conn.load_data(itemtable)
+                conn.close()
+        else:
             QMessageBox.information(self,"ALERT!!","삭제할 행을 선택해 주세요!")
+        
 
+    def get_checked_rows_number(self):
+        rows = self.tableWidget.rowCount()
+        checked_rows_num = []
+        row_num = 0
+        for row in range(rows):
+            # check if a row is checked 
+            checkbox =self.tableWidget.cellWidget(row,0).isChecked() 
+            if checkbox == True:
+                checked_rows_num.append(row_num)
+            row_num += 1
+        return checked_rows_num
 
     def clear_items(self):
         # 전체 내용 삭제 
@@ -311,14 +332,6 @@ class MyWindow(QMainWindow, form_class):
                 QMessageBox.information('Warning!','작업중지오류!')
                 print('작업 중지 오류')
 
-            try:
-                self.naver.driver.switch_to.alert().dismiss()
-            except:
-                pass
-            try:
-                self.naver.driver.switch_to.alert().accept()
-            except:
-                pass
             self.textBrowser.append('작업종료')
         elif reply == QMessageBox.No:
             pass

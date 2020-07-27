@@ -2,8 +2,7 @@ import threading
 import time
 from bs4 import BeautifulSoup
 import ctypes
-
-import ctypes
+from selenium.webdriver.common.by import By
 
 # finally successed..
 def terminate_thread(thread):
@@ -134,7 +133,7 @@ class Naver_Posting(threading.Thread):
             driver.find_element_by_xpath('//*[@id="subject"]').click()
         except:
             pass
-        # driver.find_element_by_xpath('//*[@id="main-area"]/div[3]/div[1]/div/a[2]/img')
+       
         time.sleep(2)
         # 대표이미지 삽입
 
@@ -206,8 +205,10 @@ class Naver_Posting(threading.Thread):
             pass
         else:
             driver.find_element_by_xpath('//*[@id="rclickspan"]').click()
-            driver.find_element_by_xpath('//*[@id="layerRclickYnSpan"]/div/div/div/div/ul/li[2]/a').click()
-
+            try:
+                driver.find_element_by_xpath('//*[@id="layerRclickYnSpan"]/div/div/div/div/ul/li[2]/a').click()
+            except:
+                driver.find_element(By.CSS_SELECTOR, '#layerRclickYnSpan > div > div > div > div > ul > li:nth-child(2) > a').click()
         
 
         
