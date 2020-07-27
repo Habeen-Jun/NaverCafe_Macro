@@ -3,6 +3,8 @@ import time
 from bs4 import BeautifulSoup
 import ctypes
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions  import NoSuchWindowException
 
 # finally successed..
 def terminate_thread(thread):
@@ -136,9 +138,21 @@ class Naver_Posting(threading.Thread):
        
         time.sleep(2)
         # 대표이미지 삽입
+        # 새 창이 로드 되면 TRUE 를 리턴하는 함수
+        def found_window():
+            def predicate(driver):
+                try:
+                    img_win = driver.window_handles[1]
+                    driver.switch_to_window(img_win)
+                except IndexError:
+                    return False
+                else:
+                    return True # found window
+            return predicate
 
         driver.find_element_by_xpath('//*[@id="iImage"]/a/strong').click()
-        time.sleep(3)
+        # 50 초까지 기다림. 
+        WebDriverWait(driver, timeout=50).until(found_window())
         img_win = driver.window_handles[1]
         original_win =driver.window_handles[0]
         driver.switch_to_window(img_win)

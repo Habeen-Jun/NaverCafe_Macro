@@ -211,12 +211,10 @@ class MyWindow(QMainWindow, form_class):
         fname = QFileDialog.getOpenFileName(self)
         self.lineEdit_4.setText(fname[0])
         
-    
     def add_item(self):
         """
         글 리스트에 한 줄 씩 추가
         """
-        itemtable = self.tableWidget
         conn = dbmodel()
 
         import time
@@ -268,7 +266,6 @@ class MyWindow(QMainWindow, form_class):
                 conn.load_data(self.tableWidget)
                 conn.close()
                    
-
     def del_item(self):
         """
         선택 아이템 삭제 
@@ -298,7 +295,6 @@ class MyWindow(QMainWindow, form_class):
         else:
             QMessageBox.information(self,"ALERT!!","삭제할 행을 선택해 주세요!")
         
-
     def get_checked_rows_number(self):
         rows = self.tableWidget.rowCount()
         checked_rows_num = []
@@ -332,15 +328,9 @@ class MyWindow(QMainWindow, form_class):
                     time.sleep(0.1)
                     terminate_thread(self.t)
                     self.t.join()
+                self.textBrowser.append('작업종료')
             except:
-                QMessageBox.information('Warning!','작업중지오류!')
-                print('작업 중지 오류')
-
-            self.textBrowser.append('작업종료')
-        elif reply == QMessageBox.No:
-            pass
-        else:
-            QMessageBox.information(self,"작업이 이미 중지 되었습니다.","작업이 이미 중지 되었습니다")
+                QMessageBox.information(self,"작업이 이미 중지 되었습니다.","작업이 이미 중지 되었습니다")
 
     def set_category(self, cafemenulist):
         """
@@ -377,6 +367,5 @@ if __name__ == "__main__":
     myWindow = MyWindow()
     myWindow.show()
     app.exec_()
-    myWindow.naver.driver.close()
     kill_process('chromedriver')
     
