@@ -306,6 +306,7 @@ class MyWindow(QMainWindow, form_class):
                 while self.t.isAlive():
                     time.sleep(0.1)
                     terminate_thread(self.t)
+                    self.t.join()
             except:
                 QMessageBox.information('Warning!','작업중지오류!')
                 print('작업 중지 오류')
