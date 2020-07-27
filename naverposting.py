@@ -5,7 +5,7 @@ import ctypes
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions  import NoSuchWindowException
-
+from selenium.webdriver.support import expected_conditions as EC
 # finally successed..
 def terminate_thread(thread):
     """Terminates a python thread from another thread.
@@ -180,7 +180,11 @@ class Naver_Posting(threading.Thread):
         time.sleep(3)
         driver.find_element_by_xpath('//*[@id="pc_image_file"]').send_keys(item['img'])
         self.window.textBrowser.append('대표 이미지 삽입 완료')
-        driver.find_element_by_xpath('/html/body/div[3]/header/div[2]/button').click()
+        # 20초까지 기다림 
+        wait = WebDriverWait(driver,20)
+        # '올리기' 발견할 때까지 기다림
+        buttons = wait.until(EC.presence_of_element_located((By.XPATH,"//*[contains(text(), '올리기')]")))
+        buttons.click()
 
         driver.switch_to_window(original_win)
         driver.switch_to_frame('cafe_main')
@@ -220,9 +224,11 @@ class Naver_Posting(threading.Thread):
         else:
             driver.find_element_by_xpath('//*[@id="rclickspan"]').click()
             try:
-                driver.find_element_by_xpath('//*[@id="layerRclickYnSpan"]/div/div/div/div/ul/li[2]/a').click()
+                time.sleep(1)
+                driver.find_element_by_xpath('//*[@id="layerRclickYnSpan"]/div/div/div/div/ul/li[2]').click()
             except:
-                driver.find_element(By.CSS_SELECTOR, '#layerRclickYnSpan > div > div > div > div > ul > li:nth-child(2) > a').click()
+                print('click unabled')
+                pass
         
 
         
