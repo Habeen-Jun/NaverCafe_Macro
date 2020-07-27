@@ -119,6 +119,8 @@ class Naver_Posting(threading.Thread):
                     # 각 게시물 간 interval
                     time.sleep(int(interval))
         finally:
+            self.window.textBrowser.append('--------------------------------------')
+            self.window.textBrowser.append('작업이 중지 되었거나 네트워크 문제가 발생했습니다.')
             print('ended')
 
     def Selling_Post_Process(self,option_data,item):
