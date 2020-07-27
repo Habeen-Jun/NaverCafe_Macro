@@ -294,6 +294,7 @@ class MyWindow(QMainWindow, form_class):
 
                 conn.load_data(itemtable)
                 conn.close()
+            QMessageBox.information(self, '','성공적으로 행을 삭제했습니다.')
         else:
             QMessageBox.information(self,"ALERT!!","삭제할 행을 선택해 주세요!")
         
@@ -311,14 +312,17 @@ class MyWindow(QMainWindow, form_class):
         return checked_rows_num
 
     def clear_items(self):
-        # 전체 내용 삭제 
-        self.tableWidget.clearContents()
-        self.tableWidget.setRowCount(0)
-        conn = sqlite3.connect('example.db')
-        c = conn.cursor()
-        c.execute("delete from items")
-        conn.commit()
-        conn.close()
+        # 전체 내용 삭제
+        reply = QMessageBox.question(self, 'question','정말로 모든 행을 삭제하시겠습니까?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.tableWidget.clearContents()
+            self.tableWidget.setRowCount(0)
+            conn = sqlite3.connect('example.db')
+            c = conn.cursor()
+            c.execute("delete from items")
+            conn.commit()
+            conn.close()
+            QMessageBox.information(self,'','모든 행이 삭제되었습니다.')
      
     def stop_process(self):
         reply = QMessageBox.question(self, 'question','정말로 모든 작업을 종료하시겠습니까?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
