@@ -11,7 +11,7 @@ class dbmodel:
     def load_data(self, tableWidget):
         # ["등록날짜","제목", "내용", "가격","카테고리",'태그','시간','카페','id']
         try:
-            sql = "select time, title, body, price, img, category, tag, cafe, id, category_id from items"
+            sql = "select time, title, body, price, img, category, tag, id from items"
             result = self.conn.execute(sql)
             print(result)
             # 테이블 초기화 
@@ -42,8 +42,8 @@ class dbmodel:
         # itemlist = [time, category, title, price, cafe, tag, img]
         data = itemlist
         print(data)
-        self.conn.execute("insert into items (time, title, body, price, img, category, tag, cafe, category_id) values(?,?,?,?,?,?,?,?,?)",\
-                (data['time'],data['title'],data['body'],data['price'],data['img'],data['category'],data['tag'],data['cafe'],data['category_id']))
+        self.conn.execute("insert into items (time, title, body, price, img, category, tag) values(?,?,?,?,?,?,?)",\
+                (data['time'],data['title'],data['body'],data['price'],data['img'],data['categoryURL'],data['tag']))
         self.conn.commit()
 
     def delete_item(self, id_):

@@ -65,60 +65,73 @@ class Naver_Posting(threading.Thread):
                     driver = self.driver
                     print(driver)
                     
-                    driver.get('https://cafe.naver.com/4uloveme.cafe')
+                    driver.get(item['category'])
+
+                    # wait for iframe to be loaded 
+                    wait = WebDriverWait(driver,20)
+                    wait.until(EC.presence_of_element_located((By.ID,'cafe_main')))
                     
-                    try:
-                        alert = driver.switch_to_alert()
-                        alert.accept()
-                    except: 
-                        pass
-                    print('카페접속')
+                    driver.switch_to_frame('cafe_main')
 
-                    try:
-                        driver.find_element_by_xpath('//*[@id="seOneArticleFormBannerCloseBtn"]').click()
-                        print('배너 창 닫음')
-                    except:
-                        pass
+                    # '글쓰기' 발견할 때까지 기다림
+                    # 20초까지 기다림 
+                    wait = WebDriverWait(driver,20)
+                    buttons = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="writeFormBtn"]')))
+                    buttons.click()
+
+                    self.Selling_Post_Process(option_data, item)
+                    # try:
+                    #     alert = driver.switch_to_alert()
+                    #     alert.accept()
+                    # except: 
+                    #     pass
+                    # print('카페접속')
+
+                    # try:
+                    #     driver.find_element_by_xpath('//*[@id="seOneArticleFormBannerCloseBtn"]').click()
+                    #     print('배너 창 닫음')
+                    # except:
+                    #     pass
                     
 
-                    time.sleep(2)
+                    # time.sleep(2)
 
-                    # 카페 글등록 클릭
-                    sample = driver.find_element_by_xpath('//*[@id="cafe-info-data"]/div[2]/a')
-                    driver.execute_script("arguments[0].click();", sample)
-                    driver.implicitly_wait(3)
-                    print('카페 글등록 클릭.')
+                    # # 카페 글등록 클릭
+                    # sample = driver.find_element_by_xpath('//*[@id="cafe-info-data"]/div[2]/a')
+                    # driver.execute_script("arguments[0].click();", sample)
+                    # driver.implicitly_wait(3)
+                    # print('카페 글등록 클릭.')
 
-                    # 카페 메인 프레임 진입 
-                    driver.switch_to.frame("cafe_main")
+                    # # 카페 메인 프레임 진입 
+                    # driver.switch_to.frame("cafe_main")
 
-                    # 카테고리 선택
-                    time.sleep(1)
-                    driver.find_element_by_xpath('//*[@id="boardCategory"]').click()
-                    category_num = str(int(item['category_id'])+1)
-                    driver.find_element_by_xpath('//*[@id="boardCategory"]/option['+category_num+']').click()
-                    time.sleep(2)
+                    # # 카테고리 선택
+                    # time.sleep(1)
+                    # driver.find_element_by_xpath('//*[@id="boardCategory"]').click()
+                    # category_num = str(int(item['category_id'])+1)
+                    # driver.find_element_by_xpath('//*[@id="boardCategory"]/option['+category_num+']').click()
+                    # time.sleep(2)
 
 
-                    try:
-                        alert = driver.switch_to_alert()
-                        alert.accept()
-                        # 경고메세지가 뜬 건 판매글임
-                        print('alert accepted')
-                        selling_post = 1
-                    except:
-                        selling_post = 0
+                    # try:
+                    #     alert = driver.switch_to_alert()
+                    #     alert.accept()
+                    #     # 경고메세지가 뜬 건 판매글임
+                    #     print('alert accepted')
+                    #     selling_post = 1
+                    # except:
+                    #     selling_post = 0
                     
-                    if selling_post == 1:
-                        self.window.textBrowser.append('판매글 게시판')
-                        self.Selling_Post_Process(option_data, item)
-                    else:
-                        print('no alert')
-                        self.window.textBrowser.append('일반 게시판')
-                        self.Post_Process(option_data,item)
+                    # if selling_post == 1:
+                    #     self.window.textBrowser.append('판매글 게시판')
+                    #     self.Selling_Post_Process(option_data, item)
+                    # else:
+                    #     print('no alert')
+                    #     self.window.textBrowser.append('일반 게시판')
+                    #     self.Post_Process(option_data,item)
 
-                    # 각 게시물 간 interval
-                    time.sleep(int(interval))
+                    # # 각 게시물 간 interval
+                    # time.sleep(int(interval))
         finally:
             self.window.textBrowser.append('--------------------------------------')
             self.window.textBrowser.append('작업이 중지 되었거나 네트워크 문제가 발생했습니다.')
@@ -131,12 +144,18 @@ class Naver_Posting(threading.Thread):
         """
         driver = self.driver
         try:
+            # # 20초까지 기다림 
+            # wait = WebDriverWait(driver,20)
+            # # '나중에 하기' 발견할 때까지 기다림
+            # buttons = wait.until(EC.presence_of_element_located((By.XPATH,"//*[contains(text(), '나중에 하기')]")))
+            # buttons.click()
             driver.find_element_by_xpath('//*[@id="main-area"]/div[3]/div[1]/div/a[2]/img').click()
             driver.find_element_by_xpath('//*[@id="subject"]').click()
         except:
             pass
        
         time.sleep(2)
+
         # 대표이미지 삽입
         # 새 창이 로드 되면 TRUE 를 리턴하는 함수
         def found_window():
@@ -149,8 +168,13 @@ class Naver_Posting(threading.Thread):
                 else:
                     return True # found window
             return predicate
-
-        driver.find_element_by_xpath('//*[@id="iImage"]/a/strong').click()
+        
+        
+        # 클릭 했을 때 오류가 뜨지 않았는데 .. 왜 창은 안뜰까?
+        wait = WebDriverWait(driver,20)
+        buttons = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="iImage"]/a/strong')))
+        buttons.click()
+        # driver.find_element_by_xpath('//*[@id="iImage"]/a/strong').click()
         # 50 초까지 기다림. 
         WebDriverWait(driver, timeout=50).until(found_window())
         img_win = driver.window_handles[1]

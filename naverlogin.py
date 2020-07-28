@@ -18,7 +18,7 @@ class Naverlogin(QtCore.QThread):
 
         options = webdriver.ChromeOptions()
         options.add_argument("user-agent=Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko")
-        options.add_argument("headless")
+        #options.add_argument("headless")
         self.driver = webdriver.Chrome('chromedriver',options=options)
         url = 'https://nid.naver.com/nidlogin.login?mode=form&url=https%3A%2F%2Fwww.naver.com'
         # 네이버 로그인 url 접속

@@ -53,7 +53,7 @@ class MyWindow(QMainWindow, form_class):
 
         
         # 게시글 테이블
-        self.tableWidget.setHorizontalHeaderLabels(["등록날짜","제목", "내용", "가격","대표이미지","카테고리",'태그','카페','id','category_id'])
+        self.tableWidget.setHorizontalHeaderLabels(["등록날짜","제목", "내용", "가격","대표이미지","카테고리URL",'태그','id'])
         self.tableWidget.horizontalHeaderItem(0).setTextAlignment(Qt.AlignRight)
         # self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers) # edit 금지 모드
 
@@ -73,22 +73,6 @@ class MyWindow(QMainWindow, form_class):
 
         stop_button = self.pushButton_9
         stop_button.clicked.connect(self.stop_process)
-
- 
-        # 선택 카페 바뀌었을 때 해당 메뉴도 동적으로 바꿔줌.
-        self.comboBox.insertItem(0,'중고나라')
-        self.comboBox.insertItem(1,'중고폰나라')
-        self.comboBox.currentIndexChanged.connect(self.change_category_data)
-        
-       
-    def change_category_data(self):
-        print('cafe changed')
-        cafe = self.comboBox
-
-        if cafe.currentIndex() == 0:
-            self.set_category(self.joongo_menus)
-        else:
-            self.set_category(self.joongophone_menus)
 
     def check_option(self):
         allow_comments = self.checkBox.isChecked()
@@ -155,11 +139,7 @@ class MyWindow(QMainWindow, form_class):
                 try:
                     if total_interval == 0:
                         self.textBrowser.append('한 번 만 작업')
-                    # self.naver.set_window(self)
                     self.t = Naver_Posting(self, self.driver, option_data, item_list, interval)
-                    # self.t.set_option_data(option_data)
-                    # self.t.set_item_list(item_list)
-                    # self.t.set_interval(interval)
                     self.t.start()
                     print('-------------------스레드 시작 --------------------------')
                 except:
@@ -197,7 +177,6 @@ class MyWindow(QMainWindow, form_class):
             "img":items[4],
             "category":items[5],
             "tag":items[6],
-            "category_id":items[9]
             }
 
         print(itemlist)
@@ -222,11 +201,9 @@ class MyWindow(QMainWindow, form_class):
         c_time =  "%04d/%02d/%02d %02d:%02d:%02d" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
 
         time = c_time
-        category = self.comboBox_2.currentText()
+        categoryURL = self.lineEdit_8.text()
         title = self.lineEdit.text()
         price= self.lineEdit_6.text()
-        cafe = self.comboBox.currentText()
-        category_id = str(self.comboBox_2.currentIndex())
         tag = self.lineEdit_7.text()
         img = self.lineEdit_4.text()
         body = self.textEdit.toHtml()
@@ -236,7 +213,7 @@ class MyWindow(QMainWindow, form_class):
             QMessageBox.information(self,'Alert!!','제목은 필수항목입니다.')
         elif body == '':
             QMessageBox.information(self,'Alert!!','내용은 필수항목입니다.')
-        elif category_id == '0':
+        elif categoryURL == '0':
             QMessageBox.information(self,"Alert!!", '게시판을 선택해주세요.')
         elif img == '':
             QMessageBox.information(self,"Alert!", '대표이미지는 필수항목입니다.')
@@ -250,14 +227,12 @@ class MyWindow(QMainWindow, form_class):
             else:
                 itemlist = {
                     "time":time,
-                    "category":category,
+                    "categoryURL":categoryURL,
                     "title":title,
                     "price":price,
-                    "cafe":cafe,
                     "tag":tag,
                     "img":img,
                     "body":body,
-                    'category_id':category_id
                     }
             
                 conn.add_item(itemlist)
@@ -281,7 +256,7 @@ class MyWindow(QMainWindow, form_class):
                 delete_id_list  = []
 
                 for cheched_row in checkedrows_list:
-                    id_ = itemtable.item(cheched_row, 8).text()
+                    id_ = itemtable.item(cheched_row, 7).text()
                     delete_id_list.append(id_)
 
                 for delete_id in delete_id_list:
@@ -332,33 +307,16 @@ class MyWindow(QMainWindow, form_class):
             except:
                 QMessageBox.information(self,"작업이 이미 중지 되었습니다.","작업이 이미 중지 되었습니다")
 
-    def set_category(self, cafemenulist):
-        """
-        get_cafemenu로 얻은 메뉴 리스트 combobox에 구현 
-        """
-        self.comboBox_2.clear() 
-        for cate in cafemenulist:
-            self.comboBox_2.addItem(cate)
-
-    def get_cafemenu(self):
-        """
-        여기에 카페 추가
-        """
-        self.menu_getter = Cafe_Menu_Getter(self.driver)
-        self.joongo_menus = self.menu_getter.get_category('중고나라')
-        self.joongophone_menus = self.menu_getter.get_category('중고폰나라')
-        QMessageBox.information(self,"congrats!","로그인 성공!")
-
     def set_driver(self, driver):
         self.driver = driver
-        self.get_cafemenu()
     
     def set_ID(self,ID):
         self.ID = ID 
         print(f'새로 받은 아이디: {self.ID}')
     
     def set_PW(self,PW):
-        self.PW = PW 
+        self.PW = PW
+        QMessageBox.information(self,'','네이버 로그인 성공')
         print(f'새로 받은 비번: {self.PW}')
 
 
@@ -367,5 +325,4 @@ if __name__ == "__main__":
     myWindow = MyWindow()
     myWindow.show()
     app.exec_()
-    kill_process('chromedriver')
     
