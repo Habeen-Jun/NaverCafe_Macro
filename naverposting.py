@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions  import NoSuchWindowException
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 # finally successed..
 def terminate_thread(thread):
     """Terminates a python thread from another thread.
@@ -32,13 +33,14 @@ def terminate_thread(thread):
 
 ##################################
 class Naver_Posting(threading.Thread):
-    def __init__(self, window, driver, option_data, item_list, interval):
+    def __init__(self, window, driver, option_data, item_list, interval, total_interval):
         threading.Thread.__init__(self)
         self.window = window
         self.driver = driver
         self.option_data = option_data
         self.item_list = item_list
         self.interval = interval
+        self.total_interval = total_interval
 
     def set_option_data(self,option_data):
         self.option_data = option_data
@@ -53,7 +55,6 @@ class Naver_Posting(threading.Thread):
         item_list = self.item_list
         try:
             while True:
-                print('do the thing')
                 self.window.textBrowser.append("총 {} 개 게시글을 등록합니다.".format(str(len(item_list))))
                 print("총 {} 개 게시글을 등록합니다.".format(str(len(item_list))))
                 for item in item_list:
@@ -63,7 +64,6 @@ class Naver_Posting(threading.Thread):
                 
 
                     driver = self.driver
-                    print(driver)
                     
                     driver.get(item['category'])
 
@@ -72,6 +72,17 @@ class Naver_Posting(threading.Thread):
                     wait.until(EC.presence_of_element_located((By.ID,'cafe_main')))
                     
                     driver.switch_to_frame('cafe_main')
+                    
+                    try:
+                        wait = WebDriverWait(driver,3)
+                        selling_post = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="main-area"]/div[2]/div[2]/div[2]/label')))
+                        selling_post = 1 
+                        print(selling_post)
+                        print('판매글 게시판')
+                    except TimeoutException:
+                        selling_post = 0 
+                        print('일반글 게시판')
+
 
                     # '글쓰기' 발견할 때까지 기다림
                     # 20초까지 기다림 
@@ -79,59 +90,15 @@ class Naver_Posting(threading.Thread):
                     buttons = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="writeFormBtn"]')))
                     buttons.click()
 
-                    self.Selling_Post_Process(option_data, item)
-                    # try:
-                    #     alert = driver.switch_to_alert()
-                    #     alert.accept()
-                    # except: 
-                    #     pass
-                    # print('카페접속')
 
-                    # try:
-                    #     driver.find_element_by_xpath('//*[@id="seOneArticleFormBannerCloseBtn"]').click()
-                    #     print('배너 창 닫음')
-                    # except:
-                    #     pass
-                    
+                    if selling_post == 1:
+                        self.Selling_Post_Process(option_data, item)
+                    else: 
+                        self.Post_Process(option_data, item)
 
-                    # time.sleep(2)
-
-                    # # 카페 글등록 클릭
-                    # sample = driver.find_element_by_xpath('//*[@id="cafe-info-data"]/div[2]/a')
-                    # driver.execute_script("arguments[0].click();", sample)
-                    # driver.implicitly_wait(3)
-                    # print('카페 글등록 클릭.')
-
-                    # # 카페 메인 프레임 진입 
-                    # driver.switch_to.frame("cafe_main")
-
-                    # # 카테고리 선택
-                    # time.sleep(1)
-                    # driver.find_element_by_xpath('//*[@id="boardCategory"]').click()
-                    # category_num = str(int(item['category_id'])+1)
-                    # driver.find_element_by_xpath('//*[@id="boardCategory"]/option['+category_num+']').click()
-                    # time.sleep(2)
-
-
-                    # try:
-                    #     alert = driver.switch_to_alert()
-                    #     alert.accept()
-                    #     # 경고메세지가 뜬 건 판매글임
-                    #     print('alert accepted')
-                    #     selling_post = 1
-                    # except:
-                    #     selling_post = 0
-                    
-                    # if selling_post == 1:
-                    #     self.window.textBrowser.append('판매글 게시판')
-                    #     self.Selling_Post_Process(option_data, item)
-                    # else:
-                    #     print('no alert')
-                    #     self.window.textBrowser.append('일반 게시판')
-                    #     self.Post_Process(option_data,item)
-
-                    # # 각 게시물 간 interval
-                    # time.sleep(int(interval))
+                    # 각 게시물 간 interval
+                    time.sleep(int(interval))
+                time.sleep(int(self.total_interval))
         finally:
             self.window.textBrowser.append('--------------------------------------')
             self.window.textBrowser.append('작업이 중지 되었거나 네트워크 문제가 발생했습니다.')
@@ -144,11 +111,6 @@ class Naver_Posting(threading.Thread):
         """
         driver = self.driver
         try:
-            # # 20초까지 기다림 
-            # wait = WebDriverWait(driver,20)
-            # # '나중에 하기' 발견할 때까지 기다림
-            # buttons = wait.until(EC.presence_of_element_located((By.XPATH,"//*[contains(text(), '나중에 하기')]")))
-            # buttons.click()
             driver.find_element_by_xpath('//*[@id="main-area"]/div[3]/div[1]/div/a[2]/img').click()
             driver.find_element_by_xpath('//*[@id="subject"]').click()
         except:
@@ -371,55 +333,3 @@ class Naver_Posting(threading.Thread):
         time.sleep(2)
 
         print('열린 탭:{}'.format(driver.window_handles))
-
-class Cafe_Menu_Getter:
-    def __init__(self, driver):
-        self.driver = driver 
-
-    def get_category(self, cafe_name):
-
-        cafes = {
-            '중고나라':'joonggonara',
-            '중고폰나라':'4uloveme.cafe',
-        }
-
-        driver = self.driver
-
-        cafe_baseurl = 'https://cafe.naver.com/'
-        cafe_plusurl = cafes[cafe_name]
-
-        driver.get(cafe_baseurl+cafe_plusurl)
-
-        try:
-            driver.find_element_by_xpath('//*[@id="seOneArticleFormBannerCloseBtn"]').click()
-        except:
-            pass
-
-        # 카페 글등록 클릭 
-        try:
-            sample = driver.find_element_by_xpath('//*[@id="cafe-info-data"]/div[2]/a')
-            driver.execute_script("arguments[0].click();", sample)
-            driver.implicitly_wait(3)
-        except:
-            sample = driver.find_element_by_xpath('//*[@id="cafe-info-data"]/div[3]/a ')
-            driver.execute_script("arguments[0].click();", sample)
-            driver.implicitly_wait(3)
-
-
-        # 카페 메인 프레임 진입 
-        driver.switch_to.frame("cafe_main")
-        time.sleep(1)
-        print('cafe main')
-        soup = BeautifulSoup(driver.page_source,'html.parser')
-        time.sleep(1)
-        menus = soup.find('select',{'name':'menuid'})
-        # print(menus)
-        category = []
-        menus = menus.find_all('option')
-            
-        for menu in menus:
-            cate = menu.text
-            category.append(cate)
-        
-        return category
-

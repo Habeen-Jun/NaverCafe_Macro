@@ -11,7 +11,6 @@ from dbmodel import dbmodel
 import threading
 from naverposting import Naver_Posting
 from naverposting import terminate_thread
-from naverposting import Cafe_Menu_Getter
 
 
 # Qtdesigner로 생성한 ui불러옴 
@@ -98,7 +97,6 @@ class MyWindow(QMainWindow, form_class):
         print(option_data)
         return option_data
 
-
     def post(self):
         """글등록 데이터 naverposting의 post함수 연결  """
 
@@ -129,7 +127,6 @@ class MyWindow(QMainWindow, form_class):
                         total_interval = int(self.lineEdit_5.text())
                     except:
                         QMessageBox.information(self,'Alert!','반복작업을 체크하셨습니다. 전체 대기 시간을 설정해주세요.')
-                print('line 148')
                 for row in checked_rows:
                     option_data = self.check_option()
                     row_data = self.get_all_rowitems(row)
@@ -139,7 +136,7 @@ class MyWindow(QMainWindow, form_class):
                 try:
                     if total_interval == 0:
                         self.textBrowser.append('한 번 만 작업')
-                    self.t = Naver_Posting(self, self.driver, option_data, item_list, interval)
+                    self.t = Naver_Posting(self, self.driver, option_data, item_list, interval, total_interval)
                     self.t.start()
                     print('-------------------스레드 시작 --------------------------')
                 except:
@@ -157,7 +154,6 @@ class MyWindow(QMainWindow, form_class):
         """
         self.driver = driver
         self.naver = Naver_Posting(self, self.driver)
-
 
     def get_all_rowitems(self,row):
         """선택된 행의 모든 데이터 리스트로 리턴  """
