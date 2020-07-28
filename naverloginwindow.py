@@ -5,12 +5,13 @@ from PyQt5.QtWidgets import *
 from PyQt5 import uic
 from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtCore import *
+from PyQt5.QtCore import Qt
 import time 
 from naverlogin import Naverlogin
 import threading
 from multiprocessing import Process
 from multiprocessing.pool import ThreadPool
-
+from PyQt5.QtWidgets import QDialog
 
 
 
@@ -26,6 +27,13 @@ class NaverLoginWindow(QMainWindow, login_class):
         self.setupUi(self)
         self.pushButton.clicked.connect(self.loginproccess)
         self.login_OK = False
+        self.lineEdit.setFocus(True)
+        # 엔터 누르면 로그인 
+        self.lineEdit_2.returnPressed.connect(self.loginproccess)
+
+    def keyPressEvent(self, event):           
+        if event.key() == Qt.Key_Tab:
+            self.lineEdit_2.setFocus(True)
 
     def loginproccess(self):
         ID = self.lineEdit.text()

@@ -9,9 +9,9 @@ from PyQt5.QtCore import *
 import time 
 from dbmodel import dbmodel
 import threading
-from NaverPosting import Naver_Posting
-from NaverPosting import terminate_thread
-from NaverPosting import Cafe_Menu_Getter
+from naverposting import Naver_Posting
+from naverposting import terminate_thread
+from naverposting import Cafe_Menu_Getter
 
 
 # Qtdesigner로 생성한 ui불러옴 
