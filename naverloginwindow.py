@@ -30,6 +30,8 @@ class NaverLoginWindow(QMainWindow, login_class):
         self.lineEdit.setFocus(True)
         # 엔터 누르면 로그인 
         self.lineEdit_2.returnPressed.connect(self.loginproccess)
+        PW = self.lineEdit_2
+        PW.setEchoMode(QLineEdit.Password)
 
     def keyPressEvent(self, event):           
         if event.key() == Qt.Key_Tab:
