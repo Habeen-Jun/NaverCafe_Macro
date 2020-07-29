@@ -2,7 +2,7 @@
 import sys
 import sqlite3
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import pyqtSlot, Qt
+from PyQt5.QtCore import pyqtSlot, Qt, QUrl
 from PyQt5 import uic
 from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtCore import *
@@ -11,6 +11,7 @@ from dbmodel import dbmodel
 import threading
 from naverposting import Naver_Posting
 from naverposting import terminate_thread
+
 
 
 # Qtdesigner로 생성한 ui불러옴 
@@ -23,7 +24,7 @@ class MyWindow(QMainWindow, form_class):
         self.setupUi(self)
   
         conn = dbmodel()
-
+        self.textEdit.setAcceptRichText(True)
         # database 정보로드
         self.tableWidget = conn.load_data(self.tableWidget)
 
@@ -190,6 +191,7 @@ class MyWindow(QMainWindow, form_class):
         """
         글 리스트에 한 줄 씩 추가
         """
+        
         conn = dbmodel()
 
         import time
@@ -203,7 +205,10 @@ class MyWindow(QMainWindow, form_class):
         tag = self.lineEdit_7.text()
         img = self.lineEdit_4.text()
         body = self.textEdit.toHtml()
-    
+        ex = QUrl('http://pythonstudy.xyz/python/article/202-MySQL-%EC%BF%BC%EB%A6%AC')
+
+
+        self.textEdit.loadResource(1,ex)
 
         if title == '':
             QMessageBox.information(self,'Alert!!','제목은 필수항목입니다.')
