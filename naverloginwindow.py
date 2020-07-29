@@ -55,6 +55,7 @@ class NaverLoginWindow(QMainWindow, login_class):
                     pass
                 self.ID = ID
                 self.PW = PW
+                QMessageBox.information(self, 'congrats','로그인 성공')
             except:
                 QMessageBox.information(self, 'alert','로그인 실패')
             

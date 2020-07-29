@@ -312,7 +312,6 @@ class MyWindow(QMainWindow, form_class):
     
     def set_PW(self,PW):
         self.PW = PW
-        QMessageBox.information(self,'','네이버 로그인 성공')
         print(f'새로 받은 비번: {self.PW}')
 
 
