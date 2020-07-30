@@ -1,301 +1,242 @@
-import re
-import time
-import random
-import win32clipboard
 
-#---------------------------------------------------------------------------
-#  Convenience functions to do the most common operation
+import sys
+from PyQt5 import QtWidgets as qtw
+from PyQt5 import QtGui as qtg
+from PyQt5 import QtCore as qtc
+import urllib.request
+from PyQt5.QtGui import *
+class InvoiceForm(qtw.QWidget):
 
-def HasHtml():
-    """
-    Return True if there is a Html fragment in the clipboard..
-    """
-    cb = HtmlClipboard()
-    return cb.HasHtmlFormat()
-
-
-def GetHtml():
-    """
-    Return the Html fragment from the clipboard or None if there is no Html in the clipboard.
-    """
-    cb = HtmlClipboard()
-    if cb.HasHtmlFormat():
-        return cb.GetFragment()
-    else:
-        return None
-
-
-def PutHtml(fragment):
-    """
-    Put the given fragment into the clipboard.
-    Convenience function to do the most common operation
-    """
-    cb = HtmlClipboard()
-    cb.PutFragment(fragment)
-   
-
-
-#---------------------------------------------------------------------------
-
-class HtmlClipboard:
-
-    CF_HTML = None
-
-    MARKER_BLOCK_OUTPUT = \
-        "Version:1.0\r\n" \
-        "StartHTML:%09d\r\n" \
-        "EndHTML:%09d\r\n" \
-        "StartFragment:%09d\r\n" \
-        "EndFragment:%09d\r\n" \
-        "StartSelection:%09d\r\n" \
-        "EndSelection:%09d\r\n" \
-        "SourceURL:%s\r\n"
-
-    MARKER_BLOCK_EX = \
-        "Version:(\S+)\s+" \
-        "StartHTML:(\d+)\s+" \
-        "EndHTML:(\d+)\s+" \
-        "StartFragment:(\d+)\s+" \
-        "EndFragment:(\d+)\s+" \
-        "StartSelection:(\d+)\s+" \
-        "EndSelection:(\d+)\s+" \
-        "SourceURL:(\S+)"
-    MARKER_BLOCK_EX_RE = re.compile(MARKER_BLOCK_EX)
-
-    MARKER_BLOCK = \
-        "Version:(\S+)\s+" \
-        "StartHTML:(\d+)\s+" \
-        "EndHTML:(\d+)\s+" \
-        "StartFragment:(\d+)\s+" \
-        "EndFragment:(\d+)\s+" \
-           "SourceURL:(\S+)"
-    MARKER_BLOCK_RE = re.compile(MARKER_BLOCK)
-
-    DEFAULT_HTML_BODY = \
-        "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">" \
-        "<HTML><HEAD></HEAD><BODY><!--StartFragment-->%s<!--EndFragment--></BODY></HTML>"
+    submitted = qtc.pyqtSignal(dict)
 
     def __init__(self):
-        self.html = None
-        self.fragment = None
-        self.selection = None
-        self.source = None
-        self.htmlClipboardVersion = None
+        super().__init__()
+        self.setLayout(qtw.QFormLayout())
+        self.inputs = {}
+        self.inputs['Customer Name'] = qtw.QLineEdit()
+        self.inputs['Customer Address'] = qtw.QPlainTextEdit()
+        self.inputs['Invoice Date'] = qtw.QDateEdit(
+            date=qtc.QDate.currentDate(), calendarPopup=True)
+        self.inputs['Days until Due'] = qtw.QSpinBox(
+            minimum=0, maximum=60, value=30)
+        for label, widget in self.inputs.items():
+            self.layout().addRow(label, widget)
+
+        self.line_items = qtw.QTableWidget(
+            rowCount=10, columnCount=3)
+        self.line_items.setHorizontalHeaderLabels(
+            ['Job', 'Rate', 'Hours'])
+        self.line_items.horizontalHeader().setSectionResizeMode(
+            qtw.QHeaderView.Stretch)
+        self.layout().addRow(self.line_items)
+        for row in range(self.line_items.rowCount()):
+            for col in range(self.line_items.columnCount()):
+                if col > 0:
+                    w = qtw.QSpinBox(minimum=0, maximum=300)
+                    self.line_items.setCellWidget(row, col, w)
+        submit = qtw.QPushButton('Create Invoice', clicked=self.on_submit)
+        self.layout().addRow(submit)
+
+    def on_submit(self):
+        data = {
+            'c_name': self.inputs['Customer Name'].text(),
+            'c_addr': self.inputs['Customer Address'].toPlainText(),
+            'i_date': self.inputs['Invoice Date'].date().toString(),
+            'i_due': self.inputs['Invoice Date'].date().addDays(
+                self.inputs['Days until Due'].value()).toString(),
+            'i_terms': '{} days'.format(self.inputs['Days until Due'].value())
+        }
+        data['line_items'] = []
+        for row in range(self.line_items.rowCount()):
+            if not self.line_items.item(row, 0):
+                continue
+            job = self.line_items.item(row, 0).text()
+            rate = self.line_items.cellWidget(row, 1).value()
+            hours = self.line_items.cellWidget(row, 2).value()
+            total = rate * hours
+            row_data = [job, rate, hours, total]
+            if any(row_data):
+                data['line_items'].append(row_data)
+        data['total_due'] = sum(x[3] for x in data['line_items'])
+        self.submitted.emit(data)
 
 
-    def GetCfHtml(self):
-        """
-        Return the FORMATID of the HTML format
-        """
-        if self.CF_HTML is None:
-            self.CF_HTML = win32clipboard.RegisterClipboardFormat("HTML Format")
+class InvoiceView(qtw.QTextEdit):
 
-        return self.CF_HTML
+    dpi = 72
+    doc_width = 8.5 * dpi
+    doc_height = 11 * dpi
 
-
-    def GetAvailableFormats(self):
-        """
-        Return a possibly empty list of formats available on the clipboard
-        """
-        formats = []
-        try:
-            win32clipboard.OpenClipboard(0)
-            cf = win32clipboard.EnumClipboardFormats(0)
-            while (cf != 0):
-                formats.append(cf)
-                cf = win32clipboard.EnumClipboardFormats(cf)
-        finally:
-            win32clipboard.CloseClipboard()
-
-        return formats
+    def __init__(self):
+        super().__init__(readOnly=False)
+        self.setFixedSize(qtc.QSize(self.doc_width, self.doc_height))
 
 
-    def HasHtmlFormat(self):
-        """
-        Return a boolean indicating if the clipboard has data in HTML format
-        """
-        return (self.GetCfHtml() in self.GetAvailableFormats())
+    def build_invoice(self, data):
+        document = qtg.QTextDocument()
+        self.setDocument(document)
+        document.setPageSize(qtc.QSizeF(self.doc_width, self.doc_height))
+        cursor = qtg.QTextCursor(document)
+        root = document.rootFrame()
+        cursor.setPosition(root.lastPosition())
+
+        # Insert top-level frames
+        logo_frame_fmt = qtg.QTextFrameFormat()
+        logo_frame_fmt.setBorder(2)
+        logo_frame_fmt.setPadding(10)
+        logo_frame = cursor.insertFrame(logo_frame_fmt)
+
+        cursor.setPosition(root.lastPosition())
+        cust_addr_frame_fmt = qtg.QTextFrameFormat()
+        cust_addr_frame_fmt.setWidth(self.doc_width * .3)
+        cust_addr_frame_fmt.setPosition(qtg.QTextFrameFormat.FloatRight)
+        cust_addr_frame = cursor.insertFrame(cust_addr_frame_fmt)
+
+        cursor.setPosition(root.lastPosition())
+        terms_frame_fmt = qtg.QTextFrameFormat()
+        terms_frame_fmt.setWidth(self.doc_width * .5)
+        terms_frame_fmt.setPosition(qtg.QTextFrameFormat.FloatLeft)
+        terms_frame = cursor.insertFrame(terms_frame_fmt)
+
+        cursor.setPosition(root.lastPosition())
+        line_items_frame_fmt = qtg.QTextFrameFormat()
+        line_items_frame_fmt.setMargin(25)
+        line_items_frame = cursor.insertFrame(line_items_frame_fmt)
+
+        # Create the heading
+        # create a format for the characters
+        std_format = qtg.QTextCharFormat()
+
+        logo_format = qtg.QTextCharFormat()
+        logo_format.setFont(
+            qtg.QFont('Impact', 24, qtg.QFont.DemiBold))
+        logo_format.setUnderlineStyle(
+            qtg.QTextCharFormat.SingleUnderline)
+        logo_format.setVerticalAlignment(
+            qtg.QTextCharFormat.AlignMiddle)
+
+        label_format = qtg.QTextCharFormat()
+        label_format.setFont(qtg.QFont('Sans', 12, qtg.QFont.Bold))
+
+        # create a format for the block
+        cursor.setPosition(logo_frame.firstPosition())
+        # The easy way:
+        #cursor.insertImage('nc_logo.png')
+        # The better way:
+        logo_image_fmt = qtg.QTextImageFormat()
+        logo_image_fmt.setName('nc_logo.png')
+        logo_image_fmt.setHeight(48)
+        cursor.insertImage(logo_image_fmt, qtg.QTextFrameFormat.FloatLeft)
+        cursor.insertText('   ')
+
+        urlString =  'https://lh3.googleusercontent.com/ogw/ADGmqu9OqMeqRnFRHCj1a4BJd0wbZqIxwRgwap6VVMuT=s32-c-mo'
+        imageFromWeb = urllib.request.urlopen(urlString).read()
+        qPixmapVar = QImage() 
+        qPixmapVar.loadFromData(imageFromWeb)
+        logo_image_fmt = qtg.QTextImageFormat()
+        # logo_image_fmt.setName('qPixmapVar')
+        # logo_image_fmt.setHeight(48)
+        # cursor.insertHtml('<img class="gb_Ka gbii" src="https://lh3.googleusercontent.com/ogw/ADGmqu9OqMeqRnFRHCj1a4BJd0wbZqIxwRgwap6VVMuT=s32-c-mo">')
+        cursor.insertImage(qPixmapVar)
+        cursor.insertText('Ninja Coders, LLC', logo_format)
+        cursor.insertBlock()
+        cursor.insertText('123 N Wizard St, Yonkers, NY 10701', std_format)
+
+        ## Customer address
+        cursor.setPosition(cust_addr_frame.lastPosition())
+
+        address_format = qtg.QTextBlockFormat()
+        address_format.setLineHeight(
+            150, qtg.QTextBlockFormat.ProportionalHeight)
+        address_format.setAlignment(qtc.Qt.AlignRight)
+        address_format.setRightMargin(25)
+
+        cursor.insertBlock(address_format)
+        cursor.insertText('Customer:', label_format)
+        cursor.insertBlock(address_format)
+        cursor.insertText(data['c_name'], std_format)
+        cursor.insertBlock(address_format)
+        cursor.insertText(data['c_addr'])
+
+        ## Terms
+        cursor.setPosition(terms_frame.lastPosition())
+        cursor.insertText('Terms:', label_format)
+        cursor.insertList(qtg.QTextListFormat.ListDisc)
+        # cursor is now in the first list item
+
+        term_items = (
+            f'<b>Invoice dated:</b> {data["i_date"]}',
+            f'<b>Invoice terms:</b> {data["i_terms"]}',
+            f'<b>Invoice due:</b> {data["i_due"]}',
+        )
+
+        for i, item in enumerate(term_items):
+            if i > 0:
+                cursor.insertBlock()
+            # We can insert HTML too, but not with a textformat
+            cursor.insertHtml(item)
+
+        ## Line items
+        table_format = qtg.QTextTableFormat()
+        table_format.setHeaderRowCount(1)
+        table_format.setWidth(
+            qtg.QTextLength(qtg.QTextLength.PercentageLength, 100))
+
+        headings = ('Job', 'Rate', 'Hours', 'Cost')
+        num_rows = len(data['line_items']) + 1
+        num_cols = len(headings)
+
+        cursor.setPosition(line_items_frame.lastPosition())
+        table = cursor.insertTable(num_rows, num_cols, table_format)
+
+        # now we're in the first cell of the table
+        # write headers
+        for heading in headings:
+            cursor.insertText(heading, label_format)
+            cursor.movePosition(qtg.QTextCursor.NextCell)
+
+        # write data
+        for row in data['line_items']:
+            for col, value in enumerate(row):
+                text = f'${value}' if col in (1, 3) else f'{value}'
+                cursor.insertText(text, std_format)
+                cursor.movePosition(qtg.QTextCursor.NextCell)
+
+        # Append a row
+        table.appendRows(1)
+        cursor = table.cellAt(num_rows, 0).lastCursorPosition()
+        cursor.insertText('Total', label_format)
+        cursor = table.cellAt(num_rows, 3).lastCursorPosition()
+        cursor.insertText(f"${data['total_due']}", label_format)
+
+        # Set the document
 
 
-    def GetFromClipboard(self):
-        """
-        Read and decode the HTML from the clipboard
-        """
-
-        # implement fix from: http://teachthe.net/?p=1137
-
-        cbOpened = False
-        while not cbOpened:
-            try:
-                win32clipboard.OpenClipboard(0)
-                src = win32clipboard.GetClipboardData(self.GetCfHtml())
-                src = src.decode("UTF-8")
-                self.DecodeClipboardSource(src)
-
-                cbOpened = True
-
-                win32clipboard.CloseClipboard()
-                # print(src)
-                return src
-                
-            except Exception as err:
-                # If access is denied, that means that the clipboard is in use.
-                # Keep trying until it's available.
-                if err.winerror == 5:  # Access Denied
-                    pass
-                    # wait on clipboard because something else has it. we're waiting a
-                    # random amount of time before we try again so we don't collide again
-                    time.sleep( random.random()/50 )
-                elif err.winerror == 1418:  # doesn't have board open
-                    pass
-                elif err.winerror == 0:  # open failure
-                    pass
-                else:
-                    print( 'ERROR in Clipboard section of readcomments: %s' % err)
-
-                    pass    
-            
-
-    def DecodeClipboardSource(self, src):
-        """
-        Decode the given string to figure out the details of the HTML that's on the string
-        """
-        # Try the extended format first (which has an explicit selection)
-        matches = self.MARKER_BLOCK_EX_RE.match(src)
-        if matches:
-            self.prefix = matches.group(0)
-            self.htmlClipboardVersion = matches.group(1)
-            self.html = src[int(matches.group(2)):int(matches.group(3))]
-            self.fragment = src[int(matches.group(4)):int(matches.group(5))]
-            self.selection = src[int(matches.group(6)):int(matches.group(7))]
-            self.source = matches.group(8)
-        else:
-            # Failing that, try the version without a selection
-            matches = self.MARKER_BLOCK_RE.match(src)
-            if matches:
-                self.prefix = matches.group(0)
-                self.htmlClipboardVersion = matches.group(1)
-                self.html = src[int(matches.group(2)):int(matches.group(3))]
-                self.fragment = src[int(matches.group(4)):int(matches.group(5))]
-                self.source = matches.group(6)
-                self.selection = self.fragment
 
 
-    def GetHtml(self, refresh=False):
-        """
-        Return the entire Html document
-        """
-        return self.GetFromClipboard()
+class MainWindow(qtw.QMainWindow):
 
-    def GetFragment(self, refresh=False):
-        """
-        Return the Html fragment. A fragment is well-formated HTML enclosing the selected text
-        """
-        if not self.fragment or refresh:
-            self.GetFromClipboard()
-        return self.fragment
+    def __init__(self):
+        """MainWindow constructor."""
+        super().__init__()
+        # Main UI code goes here
+        main = qtw.QWidget()
+        main.setLayout(qtw.QHBoxLayout())
+        self.setCentralWidget(main)
 
+        form = InvoiceForm()
+        main.layout().addWidget(form)
 
-    def GetSelection(self, refresh=False):
-        """
-        Return the part of the HTML that was selected. It might not be well-formed.
-        """
-        if not self.selection or refresh:
-            self.GetFromClipboard()
-        return self.selection
+        self.preview = InvoiceView()
+        main.layout().addWidget(self.preview)
 
+        form.submitted.connect(self.preview.build_invoice)
 
-    def GetSource(self, refresh=False):
-        """
-        Return the URL of the source of this HTML
-        """
-        if not self.selection or refresh:
-            self.GetFromClipboard()
-        return self.source
-
-
-    def PutFragment(self, fragment, selection=None, html=None, source=None):
-        """
-        Put the given well-formed fragment of Html into the clipboard.
-        selection, if given, must be a literal string within fragment.
-        html, if given, must be a well-formed Html document that textually
-        contains fragment and its required markers.
-        """
-        if selection is None:
-            selection = fragment
-        if html is None:
-            html = self.DEFAULT_HTML_BODY % fragment
-        if source is None:
-            source = "file://HtmlClipboard.py"
-
-        fragmentStart = html.index(fragment)
-        fragmentEnd = fragmentStart + len(fragment)
-        selectionStart = html.index(selection)
-        selectionEnd = selectionStart + len(selection)
-        self.PutToClipboard(html, fragmentStart, fragmentEnd, selectionStart, selectionEnd, source)
-
-
-    def PutToClipboard(self, html, fragmentStart, fragmentEnd, selectionStart, selectionEnd, source="None"):
-        """
-        Replace the Clipboard contents with the given html information.
-        """
-
-        try:
-            win32clipboard.OpenClipboard(0)
-            win32clipboard.EmptyClipboard()
-            src = self.EncodeClipboardSource(html, fragmentStart, fragmentEnd, selectionStart, selectionEnd, source)
-            src = src.encode("UTF-8")
-            #print(src)
-            win32clipboard.SetClipboardData(self.GetCfHtml(), src)
-        finally:
-            win32clipboard.CloseClipboard()
-
-
-    def EncodeClipboardSource(self, html, fragmentStart, fragmentEnd, selectionStart, selectionEnd, source):
-        """
-        Join all our bits of information into a string formatted as per the HTML format specs.
-        """
-        # How long is the prefix going to be?
-        dummyPrefix = self.MARKER_BLOCK_OUTPUT % (0, 0, 0, 0, 0, 0, source)
-        lenPrefix = len(dummyPrefix)
-
-        prefix = self.MARKER_BLOCK_OUTPUT % (lenPrefix, len(html)+lenPrefix,
-                        fragmentStart+lenPrefix, fragmentEnd+lenPrefix,
-                        selectionStart+lenPrefix, selectionEnd+lenPrefix,
-                        source)
-        return (prefix + html)
-
-
-def DumpHtml():
-
-    cb = HtmlClipboard()
-    print("GetAvailableFormats()=%s" % str(cb.GetAvailableFormats()))
-    print("HasHtmlFormat()=%s" % str(cb.HasHtmlFormat()))
-    if cb.HasHtmlFormat():
-        cb.GetFromClipboard()
-        print("prefix=>>>%s<<<END" % cb.prefix)
-        print("htmlClipboardVersion=>>>%s<<<END" % cb.htmlClipboardVersion)
-        print("GetSelection()=>>>%s<<<END" % cb.GetSelection())
-        print("GetFragment()=>>>%s<<<END" % cb.GetFragment())
-        print("GetHtml()=>>>%s<<<END" % cb.GetHtml())
-        print("GetSource()=>>>%s<<<END" % cb.GetSource())
+        # End main UI code
+        self.show()
 
 
 if __name__ == '__main__':
-
-    # def test_SimpleGetPutHtml():
-    #     data = "<p>Writing to the clipboard is <strong>easy</strong> with this code.</p>"
-    #     PutHtml(data)
-    #     if GetHtml() == data:
-    #         print("passed")
-    #     else:
-    #         print("failed")
-
-    # test_SimpleGetPutHtml()
-
-    GetHtml()
-    cb =HtmlClipboard()
-    cb.GetFromClipboard()
-    html = cb.GetHtml()
-    print(html)
-    #DumpHtml()
+    app = qtw.QApplication(sys.argv)
+    mw = MainWindow()
+    sys.exit(app.exec())
