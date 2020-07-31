@@ -6,16 +6,20 @@ from PyQt5.QtCore import pyqtSlot, Qt, QUrl
 from PyQt5 import uic
 from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 import time 
 from dbmodel import dbmodel
 import threading
 from naverposting import Naver_Posting
 from naverposting import terminate_thread
-
-
-
+import re
+from bs4 import BeautifulSoup
+from PyQt5.QtWidgets import QMainWindow, QWidget, QPlainTextEdit, QTextEdit, QPushButton, QBoxLayout, QVBoxLayout
+import urllib.request
+from editwindow import Editwindow
 # Qtdesigner로 생성한 ui불러옴 
 form_class = uic.loadUiType("macro0704.ui")[0]
+form_class = uic.loadUiType("mainwindow_ex.ui")[0]
         
 class MyWindow(QMainWindow, form_class):
     def __init__(self):
@@ -24,7 +28,17 @@ class MyWindow(QMainWindow, form_class):
         self.setupUi(self)
   
         conn = dbmodel()
+
         self.textEdit.setAcceptRichText(True)
+        #self.textEdit.cursorPositionChanged.connect(self.getfullhtml)
+
+
+        document = QTextDocument()
+        self.textEdit.setDocument(document)
+        self.cursor = QTextCursor(document)
+        # root = document.rootFrame()
+        # self.cursor.setPosition(root.lastPosition())
+
         # database 정보로드
         self.tableWidget = conn.load_data(self.tableWidget)
 
@@ -58,10 +72,14 @@ class MyWindow(QMainWindow, form_class):
         # self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers) # edit 금지 모드
 
         글등록 = self.pushButton_2
-        글등록.clicked.connect(self.add_item)
+        글등록.clicked.connect(self.getfullhtml)
 
         delete_button = self.pushButton_6
         delete_button.clicked.connect(self.del_item)
+
+
+        self.editbutton = self.pushButton_4
+        self.editbutton.clicked.connect(self.editpost)
 
         self.pushButton.clicked.connect(self.openimagefile)
 
@@ -73,6 +91,75 @@ class MyWindow(QMainWindow, form_class):
 
         stop_button = self.pushButton_9
         stop_button.clicked.connect(self.stop_process)
+    def editpost(self):
+
+        checkedrows_list = self.get_checked_rows_number()
+
+        if checkedrows_list != []:
+            pass
+            itemtable = self.tableWidget
+            checkedrows_list = self.get_checked_rows_number()
+            if len(checkedrows_list) != 1:
+                QMessageBox.information(self,'alert','게시글을 한개만 선택해 주세요')
+            else:
+                self.editwindow = Editwindow()
+                self.editwindow.show()
+                title = itemtable.item(checkedrows_list[0], 1).text()
+                contents = itemtable.item(checkedrows_list[0], 2).text()
+                price = itemtable.item(checkedrows_list[0], 3).text()
+                image = itemtable.item(checkedrows_list[0], 4).text()
+                cateURL = itemtable.item(checkedrows_list[0], 5).text()
+                tag = itemtable.item(checkedrows_list[0], 6).text()
+
+
+                self.editwindow.lineEdit_2.setText(title)
+                self.editwindow.lineEdit_3.setText(price)
+                self.editwindow.textEdit.setHtml(contents)
+                self.editwindow.lineEdit_4.setText(cateURL)
+                self.editwindow.lineEdit.setText(tag)
+                self.editwindow.lineEdit_5.setText(image)
+
+
+
+            # print('checked rows : {}'.format(checkedrows_list))
+            # delete_id_list  = []
+
+            # for cheched_row in checkedrows_list:
+            #     id_ = itemtable.item(cheched_row, 7).text()
+            #     delete_id_list.append(id_)
+
+            # for delete_id in delete_id_list:
+            #     conn = dbmodel()
+            #     conn.delete_item(delete_id)
+            #     print('deleted')
+        else: 
+            QMessageBox.information(self,'alert','수정할 게시글을 선택해 주세요')
+
+
+
+    def getfullhtml(self):
+        html = self.textEdit.toHtml()
+        html_list = re.split('<img[^<>]*>', html)
+        
+         
+        soup = BeautifulSoup(html,'html.parser')
+        img_list = soup.find_all('img')
+
+
+        ## 본문내용에 이미지 있으면 보여줌
+        if img_list != []:
+            html_num = 0
+            self.textEdit.clear()
+            print(img_list)
+            for img in img_list:
+                imageFromWeb = urllib.request.urlopen(img.attrs['src']).read()
+                qPixmapVar = QImage() 
+                qPixmapVar.loadFromData(imageFromWeb)
+                self.cursor.insertHtml(html_list[html_num])
+                self.cursor.insertImage(qPixmapVar)
+                html_num += 1
+        else:
+            pass
 
     def check_option(self):
         allow_comments = self.checkBox.isChecked()
@@ -185,7 +272,7 @@ class MyWindow(QMainWindow, form_class):
         대표이미지 파일 설정
         """
         fname = QFileDialog.getOpenFileName(self)
-        self.lineEdit_4.setText(fname[0])
+        self.lineEdit_5.setText(fname[0])
         
     def add_item(self):
         """

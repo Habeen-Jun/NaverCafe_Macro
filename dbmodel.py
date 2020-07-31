@@ -51,4 +51,11 @@ class dbmodel:
         self.conn.execute(sql,(id_,))
         self.conn.commit()
 
+    def update_item(self, itemlist):
+        data = itemlist
+        self.conn.execute("write update query here",\
+                (data['time'],data['title'],data['body'],data['price'],data['img'],data['categoryURL'],data['tag']))
+        self.conn.commit()
+
+
     
