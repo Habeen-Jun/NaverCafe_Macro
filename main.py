@@ -19,7 +19,7 @@ class Controller:
     
     def show_naverlogin(self):
         self.naverlogin = NaverLoginWindow()
-        self.login.close()
+        # self.login.close()
         self.naverlogin.switch_window.connect(self.show_main)
         self.naverlogin.show()
 
@@ -35,7 +35,7 @@ class Controller:
 def main():
     app = QApplication(sys.argv)
     controller = Controller()
-    controller.show_login()
+    controller.show_naverlogin()
     sys.exit(app.exec_())
 
 if __name__ == "__main__":

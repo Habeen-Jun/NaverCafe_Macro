@@ -51,11 +51,11 @@ class dbmodel:
         self.conn.execute(sql,(id_,))
         self.conn.commit()
 
-    def update_item(self, itemlist):
-        data = itemlist
-        self.conn.execute("write update query here",\
-                (data['time'],data['title'],data['body'],data['price'],data['img'],data['categoryURL'],data['tag']))
+    def update_item(self, data):
+        self.conn.execute("update items set time = ?, title = ?, body = ?, price = ?, img = ?, category = ?, tag = ? where id = ?",\
+                (data['time'],data['title'],data['body'],data['price'],data['img'],data['category'],data['tag'],data['id']))
         self.conn.commit()
+
 
 
     

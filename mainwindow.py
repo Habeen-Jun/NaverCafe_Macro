@@ -17,6 +17,20 @@ from bs4 import BeautifulSoup
 from PyQt5.QtWidgets import QMainWindow, QWidget, QPlainTextEdit, QTextEdit, QPushButton, QBoxLayout, QVBoxLayout
 import urllib.request
 from editwindow import Editwindow
+import time
+import pyperclip
+import pyautogui
+
+
+
+
+default_html = """
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+<html><head><meta name="qrichtext" content="1" /><style type="text/css">
+p, li { white-space: pre-wrap; }
+</style></head><body style=" font-family:'Gulim'; font-size:9pt; font-weight:400; font-style:normal;">
+<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><br /></p></body></html>
+"""
 # Qtdesigner로 생성한 ui불러옴 
 form_class = uic.loadUiType("macro0704.ui")[0]
 form_class = uic.loadUiType("mainwindow_ex.ui")[0]
@@ -26,12 +40,19 @@ class MyWindow(QMainWindow, form_class):
         super().__init__()
         self.login_OK = False 
         self.setupUi(self)
+        self.setWindowTitle("N_AutoPostingBot")
   
         conn = dbmodel()
 
         self.textEdit.setAcceptRichText(True)
+        self.textEdit.setPlaceholderText('게시글 본문 입력(글꼴, 색상, 이미지 적용 가능)')
         #self.textEdit.cursorPositionChanged.connect(self.getfullhtml)
 
+        self.lineEdit_4.setPlaceholderText('판매글은 대표 이미지 필수')
+        self.lineEdit_6.setPlaceholderText('판매글은 가격 설정 필수')
+
+        # 카테고리 URL placeholder
+        self.lineEdit_3.setPlaceholderText('카페 메뉴 링크')
 
         document = QTextDocument()
         self.textEdit.setDocument(document)
@@ -61,9 +82,9 @@ class MyWindow(QMainWindow, form_class):
         self.checkBox_9.setChecked(True)
 
         # 작업 대기시간 디폴트 5
-        self.lineEdit_2.setText('5')
+        self.lineEdit_2.setText('30')
         # 전체 대기시간 디폴트 10초 
-        self.lineEdit_5.setText('10')
+        self.lineEdit_5.setText('900')
 
         
         # 게시글 테이블
@@ -72,7 +93,7 @@ class MyWindow(QMainWindow, form_class):
         # self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers) # edit 금지 모드
 
         글등록 = self.pushButton_2
-        글등록.clicked.connect(self.getfullhtml)
+        글등록.clicked.connect(self.add_item)
 
         delete_button = self.pushButton_6
         delete_button.clicked.connect(self.del_item)
@@ -91,6 +112,68 @@ class MyWindow(QMainWindow, form_class):
 
         stop_button = self.pushButton_9
         stop_button.clicked.connect(self.stop_process)
+
+        # self.textEdit.textChanged.connect(self.check_paste)
+        self.textEdit.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.KeyPress and obj is self.textEdit:
+            if self.check_paste(event):
+                print('get fullhtml')
+                # clipboard = QGuiApplication.clipboard()
+                # html = clipboard.text('html')
+                # html =html[0]
+                # time.sleep(1)
+                if len(self.textEdit.toHtml()) <= 472:
+                    pyautogui.hotkey('ctrl', 'v')
+                    # pyautogui.hotkey('ctrl', 'a')
+                    # pyautogui.press('backspace')
+                    # pyautogui.click()
+                    # print('전체선택')
+                    # self.textEdit.append('----------------------')
+                    # self.textEdit.clear()
+                    # self.textEdit.append('싹다지움')
+                    
+                    # self.textEdit.clear()
+                else:
+                    print('이제 복사됨....')
+                    time.sleep(3)
+                    pyautogui.hotkey('ctrl', 'a')
+                    time.sleep(3)
+                    pyautogui.press('space')
+
+                    self.append_test('싹다지움')
+                    
+
+                    # html = self.textEdit.toHtml()
+                    # print(html)
+                    # pyautogui.hotkey('ctrl', 'a')
+                    # pyautogui.press('backspace')
+                     
+                
+                    # self.getfullhtml(html)
+                    # self.textEdit.setHtml(html)
+        return super().eventFilter(obj, event)
+
+    def append_test(self, string):
+        self.textEdit.append(string)
+    def check_paste(self, event):
+        MOD_MASK = (Qt.CTRL | Qt.ALT | Qt.SHIFT | Qt.META)
+        keyname = ''
+        key = event.key()
+        modifiers = int(event.modifiers())
+        if (modifiers and modifiers & MOD_MASK == modifiers and
+            key > 0 and key != Qt.Key_Shift and key != Qt.Key_Alt and
+            key != Qt.Key_Control and key != Qt.Key_Meta):
+
+            keyname = QKeySequence(modifiers + key).toString()
+
+            print('event.text(): %r' % event.text())
+            print('event.key(): %d, %#x, %s' % (key, key, keyname))
+            if keyname == 'Ctrl+V':
+                print('paste detected')
+                return True 
+
     def editpost(self):
 
         checkedrows_list = self.get_checked_rows_number()
@@ -104,12 +187,16 @@ class MyWindow(QMainWindow, form_class):
             else:
                 self.editwindow = Editwindow()
                 self.editwindow.show()
+
                 title = itemtable.item(checkedrows_list[0], 1).text()
                 contents = itemtable.item(checkedrows_list[0], 2).text()
                 price = itemtable.item(checkedrows_list[0], 3).text()
                 image = itemtable.item(checkedrows_list[0], 4).text()
                 cateURL = itemtable.item(checkedrows_list[0], 5).text()
                 tag = itemtable.item(checkedrows_list[0], 6).text()
+                self.id = itemtable.item(checkedrows_list[0], 7).text()
+
+                self.editwindow.setID(self.id)
 
 
                 self.editwindow.lineEdit_2.setText(title)
@@ -119,47 +206,40 @@ class MyWindow(QMainWindow, form_class):
                 self.editwindow.lineEdit.setText(tag)
                 self.editwindow.lineEdit_5.setText(image)
 
-
-
-            # print('checked rows : {}'.format(checkedrows_list))
-            # delete_id_list  = []
-
-            # for cheched_row in checkedrows_list:
-            #     id_ = itemtable.item(cheched_row, 7).text()
-            #     delete_id_list.append(id_)
-
-            # for delete_id in delete_id_list:
-            #     conn = dbmodel()
-            #     conn.delete_item(delete_id)
-            #     print('deleted')
+                self.editwindow.finished_Editing.connect(self.reload_table_data)
         else: 
             QMessageBox.information(self,'alert','수정할 게시글을 선택해 주세요')
 
 
+    def getfullhtml(self,html):
+        html_list = re.split('<img src="https:[^<>]*>', html)
+        print('총 {} 개의 블럭'.format(len(html_list)))
 
-    def getfullhtml(self):
-        html = self.textEdit.toHtml()
-        html_list = re.split('<img[^<>]*>', html)
+        self.textEdit.clear()
+        self.textEdit.append('---------------------------------------')
         
          
-        soup = BeautifulSoup(html,'html.parser')
-        img_list = soup.find_all('img')
+        # soup = BeautifulSoup(html,'html.parser')
+        # img_list = soup.find_all('img')
 
 
-        ## 본문내용에 이미지 있으면 보여줌
-        if img_list != []:
-            html_num = 0
-            self.textEdit.clear()
-            print(img_list)
-            for img in img_list:
-                imageFromWeb = urllib.request.urlopen(img.attrs['src']).read()
-                qPixmapVar = QImage() 
-                qPixmapVar.loadFromData(imageFromWeb)
-                self.cursor.insertHtml(html_list[html_num])
-                self.cursor.insertImage(qPixmapVar)
-                html_num += 1
-        else:
-            pass
+        # ## 본문내용에 이미지 있으면 보여줌
+        # if img_list != []:
+        #     html_num = 0
+        #     # self.textEdit.clear()
+        #     print(img_list)
+        #     for img in img_list:
+        #         img_address = img.attrs['src']
+        #         # 정상적인 이미지 주소만 변환
+        #         if img_address[:5] == 'https':
+        #             imageFromWeb = urllib.request.urlopen(img.attrs['src']).read()
+        #             qPixmapVar = QImage() 
+        #             qPixmapVar.loadFromData(imageFromWeb)
+        #             self.cursor.insertHtml(html_list[html_num])
+        #             self.cursor.insertImage(qPixmapVar)
+        #             html_num += 1
+        # else:
+        #     pass
 
     def check_option(self):
         allow_comments = self.checkBox.isChecked()
@@ -242,7 +322,18 @@ class MyWindow(QMainWindow, form_class):
         """
         self.driver = driver
         self.naver = Naver_Posting(self, self.driver)
-
+    
+    @pyqtSlot()
+    def reload_table_data(self):
+        # database 정보로드
+        self.tableWidget.clear()
+        conn = dbmodel()
+        self.tableWidget = conn.load_data(self.tableWidget)
+        # 게시글 테이블
+        self.tableWidget.setHorizontalHeaderLabels(["등록날짜","제목", "내용", "가격","대표이미지","카테고리URL",'태그','id'])
+        self.tableWidget.horizontalHeaderItem(0).setTextAlignment(Qt.AlignRight)
+        conn.close()
+        
     def get_all_rowitems(self,row):
         """선택된 행의 모든 데이터 리스트로 리턴  """
         
@@ -266,14 +357,18 @@ class MyWindow(QMainWindow, form_class):
         print(itemlist)
         return itemlist
            
-
     def openimagefile(self):
         """
         대표이미지 파일 설정
         """
         fname = QFileDialog.getOpenFileName(self)
-        self.lineEdit_5.setText(fname[0])
-        
+        self.lineEdit_4.setText(fname[0])
+   
+    def getFormattedCurrentTime(self):
+        now = time.localtime()
+        c_time =  "%04d/%02d/%02d %02d:%02d:%02d" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
+        return c_time
+
     def add_item(self):
         """
         글 리스트에 한 줄 씩 추가
@@ -281,12 +376,10 @@ class MyWindow(QMainWindow, form_class):
         
         conn = dbmodel()
 
-        import time
-        now = time.localtime()
-        c_time =  "%04d/%02d/%02d %02d:%02d:%02d" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
+        c_time = self.getFormattedCurrentTime()
 
         time = c_time
-        categoryURL = self.lineEdit_8.text()
+        categoryURL = self.lineEdit_3.text()
         title = self.lineEdit.text()
         price= self.lineEdit_6.text()
         tag = self.lineEdit_7.text()
@@ -412,4 +505,3 @@ if __name__ == "__main__":
     myWindow = MyWindow()
     myWindow.show()
     app.exec_()
-    

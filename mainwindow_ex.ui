@@ -25,8 +25,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>866</width>
-         <height>568</height>
+         <width>862</width>
+         <height>554</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_8">
@@ -135,7 +135,7 @@
               <item row="0" column="0">
                <widget class="QLabel" name="label_3">
                 <property name="text">
-                 <string>작업대기시간:</string>
+                 <string>게시글간대기시간</string>
                 </property>
                </widget>
               </item>
@@ -179,7 +179,7 @@
             <item row="0" column="0">
              <widget class="QTabWidget" name="tabWidget_2">
               <property name="currentIndex">
-               <number>1</number>
+               <number>0</number>
               </property>
               <widget class="QWidget" name="tab_3">
                <attribute name="title">
@@ -212,7 +212,7 @@
                   <item row="0" column="0">
                    <widget class="QLabel" name="label_8">
                     <property name="text">
-                     <string>작업시작시간</string>
+                     <string>카테고리URL</string>
                     </property>
                    </widget>
                   </item>
@@ -223,21 +223,21 @@
                     </property>
                    </widget>
                   </item>
+                  <item row="2" column="2">
+                   <widget class="QLineEdit" name="lineEdit_7"/>
+                  </item>
+                  <item row="1" column="2">
+                   <widget class="QLineEdit" name="lineEdit_6"/>
+                  </item>
+                  <item row="0" column="2">
+                   <widget class="QLineEdit" name="lineEdit_3"/>
+                  </item>
                   <item row="1" column="0">
                    <widget class="QLabel" name="label_12">
                     <property name="text">
                      <string>판매가</string>
                     </property>
                    </widget>
-                  </item>
-                  <item row="1" column="1">
-                   <widget class="QLineEdit" name="lineEdit_6"/>
-                  </item>
-                  <item row="2" column="1">
-                   <widget class="QLineEdit" name="lineEdit_7"/>
-                  </item>
-                  <item row="0" column="1">
-                   <widget class="QTimeEdit" name="timeEdit"/>
                   </item>
                  </layout>
                 </item>
@@ -253,8 +253,8 @@
                       <rect>
                        <x>0</x>
                        <y>0</y>
-                       <width>796</width>
-                       <height>362</height>
+                       <width>780</width>
+                       <height>332</height>
                       </rect>
                      </property>
                      <layout class="QGridLayout" name="gridLayout_10">
@@ -412,7 +412,7 @@
      <x>0</x>
      <y>0</y>
      <width>886</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

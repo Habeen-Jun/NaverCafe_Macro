@@ -28,10 +28,15 @@ class NaverLoginWindow(QMainWindow, login_class):
         self.pushButton.clicked.connect(self.loginproccess)
         self.login_OK = False
         self.lineEdit.setFocus(True)
-        # 엔터 누르면 로그인 
+
+        self.lineEdit.setPlaceholderText('ID')
+
+        # 엔터 누르면 로그인
+        self.lineEdit.returnPressed.connect(self.loginproccess)
         self.lineEdit_2.returnPressed.connect(self.loginproccess)
         PW = self.lineEdit_2
         PW.setEchoMode(QLineEdit.Password)
+        PW.setPlaceholderText('password')
 
     def keyPressEvent(self, event):           
         if event.key() == Qt.Key_Tab:

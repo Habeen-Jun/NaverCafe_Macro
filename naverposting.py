@@ -7,6 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions  import NoSuchWindowException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+import re 
 # finally successed..
 def terminate_thread(thread):
     """Terminates a python thread from another thread.
@@ -48,6 +49,15 @@ class Naver_Posting(threading.Thread):
         self.item_list = item_list
     def set_interval(self, interval):
         self.interval =  interval
+
+    def convert_url(self,url):
+        menuidmatch = re.search('menuid=\d{4}',url)
+        clubidmatch = re.search('clubid=\d{8}', url)
+        menuid = menuidmatch[0].split('=')[1]
+        clubid = clubidmatch[0].split('=')[1]
+        return 'https://cafe.naver.com/ca-fe/cafes/'+clubidmatch+'/menus/'+menuidmatch+'/articles/write?boardType=L'
+
+ 
         
     def run(self):
         interval = self.interval
@@ -55,23 +65,27 @@ class Naver_Posting(threading.Thread):
         item_list = self.item_list
         try:
             while True:
-                self.window.textBrowser.append("총 {} 개 게시글을 등록합니다.".format(str(len(item_list))))
-                print("총 {} 개 게시글을 등록합니다.".format(str(len(item_list))))
+                c_time = self.getFormattedCurrentTime()
+                self.window.textBrowser.append("[{}] 총 {} 개 게시글을 등록합니다.".format( c_time, str(len(item_list))) )
+                print("[{}] 총 {} 개 게시글을 등록합니다.".format(c_time, str(len(item_list))))
                 for item in item_list:
-
-                    self.window.textBrowser.append('작업대기시간: {}'.format(str(interval)))
+                    c_time = self.getFormattedCurrentTime()
+                    self.window.textBrowser.append('[{}] 게시글 간 대기 시간: {}'.format(c_time,str(interval)))
                     print(item)
                 
 
                     driver = self.driver
+                    url = self.convert_url(item['category'])
+                    driver.get(url)
                     
-                    driver.get(item['category'])
+
+
 
                     # wait for iframe to be loaded 
-                    wait = WebDriverWait(driver,20)
-                    wait.until(EC.presence_of_element_located((By.ID,'cafe_main')))
+                    # wait = WebDriverWait(driver,20)
+                    # wait.until(EC.presence_of_element_located((By.ID,'cafe_main')))
                     
-                    driver.switch_to_frame('cafe_main')
+                    # driver.switch_to_frame('cafe_main')
                     
                     try:
                         wait = WebDriverWait(driver,3)
@@ -97,11 +111,24 @@ class Naver_Posting(threading.Thread):
                         self.Post_Process(option_data, item)
 
                     # 각 게시물 간 interval
-                    time.sleep(int(interval))
-                time.sleep(int(self.total_interval))
+                    if len(item_list) > 1:
+                        interval = int(interval)
+                        for i in range(interval):
+                            time.sleep(1)
+                            print('[게시물간대기]1초기다림.')
+                    else:
+                        pass
+
+                    self.window.textBrowser.append('--------------------------------------')
+                total_interval = int(self.total_interval)
+                for i in range(total_interval):
+                    time.sleep(1)
+                    print('[전체대기]1초기다림.')
         finally:
+            c_time = self.getFormattedCurrentTime()
             self.window.textBrowser.append('--------------------------------------')
-            self.window.textBrowser.append('작업이 중지 되었거나 네트워크 문제가 발생했습니다.')
+            c_time = self.getFormattedCurrentTime()
+            # self.window.textBrowser.appㄴend('[{}] 작업이 중지 되었거나 네트워크 문제가 발생했습니다.'.format(c_time))
             print('ended')
 
     def Selling_Post_Process(self,option_data,item):
@@ -165,7 +192,8 @@ class Naver_Posting(threading.Thread):
         
         time.sleep(3)
         driver.find_element_by_xpath('//*[@id="pc_image_file"]').send_keys(item['img'])
-        self.window.textBrowser.append('대표 이미지 삽입 완료')
+        c_time = self.getFormattedCurrentTime()
+        self.window.textBrowser.append('[{}] 대표 이미지 삽입 완료'.format(c_time))
         # 20초까지 기다림 
         wait = WebDriverWait(driver,20)
         # '올리기' 발견할 때까지 기다림
@@ -191,7 +219,8 @@ class Naver_Posting(threading.Thread):
             try:
                 time.sleep(1)
                 driver.switch_to_alert().accept()
-                self.window.textBrowser.append('매니저가 댓글설정을 허용하지 않았습니다.')
+                c_time = self.getFormattedCurrentTime()
+                self.window.textBrowser.append('[{}] 매니저가 댓글설정을 허용하지 않았습니다.'.format(c_time))
                 print('alert accepted')
             except:
                 driver.find_element_by_xpath('//*[@id="layerReplyYnSpan"]/div/div/div/div/ul/li[2]/a').click()
@@ -222,11 +251,12 @@ class Naver_Posting(threading.Thread):
         # 제목 삽입
         time.sleep(1)
         driver.execute_script("document.getElementsByName('subject')[0].value='" + item['title'] + "'")
-        self.window.textBrowser.append('제목 입력 완료')
+        c_time = self.getFormattedCurrentTime()
+        self.window.textBrowser.append('[{}] 제목 입력 완료'.format(c_time))
         # 가격 
         try:
             driver.find_element_by_xpath('//*[@id="sale_cost"]').send_keys(item['price'])
-            self.window.textBrowser.append('가격 입력 완료')
+            self.window.textBrowser.append('[{}] 가격 입력 완료'.format(c_time))
         except:
             pass
 
@@ -246,13 +276,15 @@ class Naver_Posting(threading.Thread):
         node = driver.find_element_by_xpath("/html/body")
         script = """arguments[0].insertAdjacentHTML('afterbegin', arguments[1])"""
         driver.execute_script(script, node, item['body'])
-        self.window.textBrowser.append('본문 내용 입력 완료')
+        c_time = self.getFormattedCurrentTime()
+        self.window.textBrowser.append('[{}] 본문 내용 입력 완료'.format(c_time))
 
         driver.switch_to.default_content()
         driver.switch_to.frame("cafe_main")
 
         driver.find_element_by_xpath('//*[@id="cafewritebtn"]/strong').click()
-        self.window.textBrowser.append('글등록완료')
+        c_time = self.getFormattedCurrentTime()
+        self.window.textBrowser.append('[{}] 글등록완료'.format(c_time))
         print('글등록완료')
         time.sleep(2)
 
@@ -265,14 +297,17 @@ class Naver_Posting(threading.Thread):
         """
         driver = self.driver
         # 제목 삽입
-        self.window.textBrowser.append('일반글 게시판')
+        c_time = self.getFormattedCurrentTime()
+        self.window.textBrowser.append('[{}] 일반글 게시판'.format(c_time))
         time.sleep(1)
         driver.execute_script("document.getElementsByName('subject')[0].value='" + item['title'] + "'")
-        self.window.textBrowser.append('제목입력완료')
+        c_time = self.getFormattedCurrentTime()
+        self.window.textBrowser.append('[{}] 제목입력완료'.format(c_time))
         # 가격 
         try:
             driver.find_element_by_xpath('//*[@id="sale_cost"]').send_keys(item['price'])
-            self.window.textBrowser.append('가격입력완료')
+            c_time = self.getFormattedCurrentTime()
+            self.window.textBrowser.append('[{}] 가격입력완료'.format(c_time))
         except:
             pass
 
@@ -293,7 +328,8 @@ class Naver_Posting(threading.Thread):
         # script = """arguments[0].insertAdjacentHTML('afterbegin',  "<h1>" + arguments[1] + "</h1>")"""
         script = """arguments[0].insertAdjacentHTML('afterbegin', arguments[1])"""
         driver.execute_script(script, node, item['body'])
-        self.window.textBrowser.append('본문내용 입력완료')
+        c_time = self.getFormattedCurrentTime()
+        self.window.textBrowser.append('[{}] 본문내용 입력완료'.format(c_time))
 
         driver.switch_to.default_content()
         driver.switch_to.frame("cafe_main")
@@ -306,7 +342,8 @@ class Naver_Posting(threading.Thread):
             try:
                 time.sleep(1)
                 driver.switch_to_alert().accept()
-                self.window.textBrowser.append('매니저가 댓글설정을 허용하지 않았습니다.')
+                c_time = self.getFormattedCurrentTime()
+                self.window.textBrowser.append('[{}] 매니저가 댓글설정을 허용하지 않았습니다.'.format(c_time))
                 print('alert accepted')
             except:
                 driver.find_element_by_xpath('//*[@id="layerReplyYnSpan"]/div/div/div/div/ul/li[2]/a').click()
@@ -329,7 +366,14 @@ class Naver_Posting(threading.Thread):
 
         driver.find_element_by_xpath('//*[@id="cafewritebtn"]/strong').click()
         print('글등록완료')
-        self.window.textBrowser.append('글등록 완료')
+        c_time = self.getFormattedCurrentTime()
+        self.window.textBrowser.append('[{}] 글등록 완료'.format(c_time))
         time.sleep(2)
 
         print('열린 탭:{}'.format(driver.window_handles))
+
+    
+    def getFormattedCurrentTime(self):
+        now = time.localtime()
+        c_time =  "%02d/%02d %02d:%02d:%02d" % (now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
+        return c_time

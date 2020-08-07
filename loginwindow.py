@@ -24,8 +24,10 @@ class LoginWindow(QMainWindow, login_class):
         self.setupUi(self)
         self.pushButton.clicked.connect(self.login_check)
         self.lineEdit_2.returnPressed.connect(self.login_check)
+        self.lineEdit.setPlaceholderText('ID')
         PW = self.lineEdit_2
         PW.setEchoMode(QLineEdit.Password)
+        PW.setPlaceholderText('password')
 
     def login_check(self):
         ID = self.lineEdit.text()
