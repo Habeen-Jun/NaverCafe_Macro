@@ -70,12 +70,16 @@ class NaverLoginWindow(QMainWindow, login_class):
         self.switch_window.emit()
         print('메인 윈도우로~')
 
-    @pyqtSlot(object,str,str)
-    def change_to_main(self,driver,ID,PW):
+    @pyqtSlot(object,str,str,bool)
+    def change_to_main(self,driver,ID,PW, login_ok):
         self.driver = driver
         self.ID = ID
         self.PW = PW
-        self.toMainWindow()
+        self.login_ok = login_ok
+        if self.login_ok:
+            self.toMainWindow()
+        else:
+            QMessageBox.information(self,'','로그인 실패')
         
         
 
