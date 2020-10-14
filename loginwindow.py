@@ -17,7 +17,7 @@ import socket
 from path_manager import resource_path
 
 # Qtdesigner로 생성한 ui불러옴 
-login_class = uic.loadUiType(resource_path("login.ui"))[0]
+login_class = uic.loadUiType(resource_path("./ui_files/login.ui"))[0]
 
 class LoginWindow(QMainWindow, login_class):
 

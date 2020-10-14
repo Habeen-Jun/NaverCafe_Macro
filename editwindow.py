@@ -11,7 +11,7 @@ from dbmodel import dbmodel
 import time 
 from path_manager import resource_path
 # Qtdesigner로 생성한 ui불러옴 
-form_class = uic.loadUiType(resource_path("editwindow.ui"))[0]
+form_class = uic.loadUiType(resource_path("./ui_files/editwindow.ui"))[0]
         
 class Editwindow(QWidget, form_class):
 

@@ -20,7 +20,7 @@ import time
 from path_manager import resource_path
 
 # Qtdesigner로 생성한 ui불러옴 
-form_class = uic.loadUiType(resource_path("mainwindow_ex.ui"))[0]
+form_class = uic.loadUiType(resource_path("ui_files/mainwindow_ex.ui"))[0]
         
 class MyWindow(QMainWindow, form_class):
     def __init__(self):

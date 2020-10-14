@@ -14,7 +14,7 @@ from path_manager import resource_path
 
 
 # Qtdesigner로 생성한 ui불러옴 
-login_class = uic.loadUiType(resource_path("naverlogin.ui"))[0]
+login_class = uic.loadUiType(resource_path("./ui_files/naverlogin.ui"))[0]
 
 
 class NaverLoginWindow(QMainWindow, login_class):
