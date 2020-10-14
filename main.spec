@@ -4,9 +4,9 @@ block_cipher = None
 
 
 a = Analysis(['main.py'],
-             pathex=['/Users/apple/python/navercafe_macro'],
-             binaries=[],
-             datas=[],
+             pathex=['C:\\Users\\PC\\Documents\\GitHub\\NaverCafe_Macro'],
+             binaries=[('./driver/chromedriver.exe', './driver')],
+             datas=[('login.ui', '.'), ('editwindow.ui', '.'), ('mainwindow_ex.ui', '.'), ('naverlogin.ui', '.')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -19,19 +19,15 @@ pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 exe = EXE(pyz,
           a.scripts,
+          a.binaries,
+          a.zipfiles,
+          a.datas,
           [],
-          exclude_binaries=True,
           name='main',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          console=True )
-coll = COLLECT(exe,
-               a.binaries,
-               a.zipfiles,
-               a.datas,
-               strip=False,
-               upx=True,
-               upx_exclude=[],
-               name='main')
+          upx_exclude=[],
+          runtime_tmpdir=None,
+          console=False , icon='icon.ico')

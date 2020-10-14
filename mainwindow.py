@@ -1,4 +1,3 @@
-
 import sys
 import sqlite3
 from PyQt5.QtWidgets import *
@@ -18,22 +17,10 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QPlainTextEdit, QTextEdit, QPu
 import urllib.request
 from editwindow import Editwindow
 import time
-import pyperclip
-import pyautogui
+from path_manager import resource_path
 
-
-
-
-default_html = """
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
-<html><head><meta name="qrichtext" content="1" /><style type="text/css">
-p, li { white-space: pre-wrap; }
-</style></head><body style=" font-family:'Gulim'; font-size:9pt; font-weight:400; font-style:normal;">
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><br /></p></body></html>
-"""
 # Qtdesigner로 생성한 ui불러옴 
-form_class = uic.loadUiType("macro0704.ui")[0]
-form_class = uic.loadUiType("mainwindow_ex.ui")[0]
+form_class = uic.loadUiType(resource_path("mainwindow_ex.ui"))[0]
         
 class MyWindow(QMainWindow, form_class):
     def __init__(self):
@@ -43,20 +30,29 @@ class MyWindow(QMainWindow, form_class):
         self.setWindowTitle("N_AutoPostingBot")
   
         conn = dbmodel()
+        # 사용 예시 영상 hyperlink
+        linkTemplate = '<a href="{0}">{1}</a>'
+        self.label_15.setOpenExternalLinks(True)
+        self.label_15.setText(linkTemplate.format('https://www.youtube.com/watch?v=aTAPNIBgFP8','사용예시영상'))
 
+        self.in_progress = False
         self.textEdit.setAcceptRichText(True)
         self.textEdit.setPlaceholderText('게시글 본문 입력(글꼴, 색상, 이미지 적용 가능)')
-        #self.textEdit.cursorPositionChanged.connect(self.getfullhtml)
 
         self.lineEdit_4.setPlaceholderText('판매글은 대표 이미지 필수')
         self.lineEdit_6.setPlaceholderText('판매글은 가격 설정 필수')
+        self.lineEdit_7.setPlaceholderText('태그 쉼표로 구분, 10개까지 입력 가능')
+        self.lineEdit_8.setPlaceholderText('네이버 카페 주소 입력')
 
         # 카테고리 URL placeholder
-        self.lineEdit_3.setPlaceholderText('카페 메뉴 링크')
+        self.lineEdit_3.setPlaceholderText('카페 메뉴명(띄어쓰기 까지 정확히 입력)')
 
         document = QTextDocument()
         self.textEdit.setDocument(document)
         self.cursor = QTextCursor(document)
+
+        # 이미지 label
+        self.lineEdit_4.setReadOnly(True)
         # root = document.rootFrame()
         # self.cursor.setPosition(root.lastPosition())
 
@@ -78,19 +74,18 @@ class MyWindow(QMainWindow, form_class):
         self.checkBox_5.setChecked(True)
         self.checkBox_6.setChecked(False)
         self.checkBox_7.setChecked(False)
-
         self.checkBox_9.setChecked(True)
 
         # 작업 대기시간 디폴트 5
-        self.lineEdit_2.setText('30')
+        self.lineEdit_2.setText('600')
         # 전체 대기시간 디폴트 10초 
         self.lineEdit_5.setText('900')
 
         
         # 게시글 테이블
-        self.tableWidget.setHorizontalHeaderLabels(["등록날짜","제목", "내용", "가격","대표이미지","카테고리URL",'태그','id'])
+        self.tableWidget.setHorizontalHeaderLabels(["등록날짜","카페주소","제목", "내용", "가격","대표이미지","메뉴명",'태그','id'])
         self.tableWidget.horizontalHeaderItem(0).setTextAlignment(Qt.AlignRight)
-        # self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers) # edit 금지 모드
+        self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers) # edit 금지 모드
 
         글등록 = self.pushButton_2
         글등록.clicked.connect(self.add_item)
@@ -116,63 +111,14 @@ class MyWindow(QMainWindow, form_class):
         # self.textEdit.textChanged.connect(self.check_paste)
         self.textEdit.installEventFilter(self)
 
-    def eventFilter(self, obj, event):
-        if event.type() == QEvent.KeyPress and obj is self.textEdit:
-            if self.check_paste(event):
-                print('get fullhtml')
-                # clipboard = QGuiApplication.clipboard()
-                # html = clipboard.text('html')
-                # html =html[0]
-                # time.sleep(1)
-                if len(self.textEdit.toHtml()) <= 472:
-                    pyautogui.hotkey('ctrl', 'v')
-                    # pyautogui.hotkey('ctrl', 'a')
-                    # pyautogui.press('backspace')
-                    # pyautogui.click()
-                    # print('전체선택')
-                    # self.textEdit.append('----------------------')
-                    # self.textEdit.clear()
-                    # self.textEdit.append('싹다지움')
-                    
-                    # self.textEdit.clear()
-                else:
-                    print('이제 복사됨....')
-                    time.sleep(3)
-                    pyautogui.hotkey('ctrl', 'a')
-                    time.sleep(3)
-                    pyautogui.press('space')
+        self.pushButton_5.clicked.connect(self.delete_log)
 
-                    self.append_test('싹다지움')
-                    
-
-                    # html = self.textEdit.toHtml()
-                    # print(html)
-                    # pyautogui.hotkey('ctrl', 'a')
-                    # pyautogui.press('backspace')
-                     
-                
-                    # self.getfullhtml(html)
-                    # self.textEdit.setHtml(html)
-        return super().eventFilter(obj, event)
-
-    def append_test(self, string):
-        self.textEdit.append(string)
-    def check_paste(self, event):
-        MOD_MASK = (Qt.CTRL | Qt.ALT | Qt.SHIFT | Qt.META)
-        keyname = ''
-        key = event.key()
-        modifiers = int(event.modifiers())
-        if (modifiers and modifiers & MOD_MASK == modifiers and
-            key > 0 and key != Qt.Key_Shift and key != Qt.Key_Alt and
-            key != Qt.Key_Control and key != Qt.Key_Meta):
-
-            keyname = QKeySequence(modifiers + key).toString()
-
-            print('event.text(): %r' % event.text())
-            print('event.key(): %d, %#x, %s' % (key, key, keyname))
-            if keyname == 'Ctrl+V':
-                print('paste detected')
-                return True 
+    def delete_log(self):
+        reply = QMessageBox.question(self, 'question','정말로 모든 로그를 삭제하시겠습니까?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.textBrowser.clear()
+        else:
+            pass
 
     def editpost(self):
 
@@ -188,13 +134,14 @@ class MyWindow(QMainWindow, form_class):
                 self.editwindow = Editwindow()
                 self.editwindow.show()
 
-                title = itemtable.item(checkedrows_list[0], 1).text()
-                contents = itemtable.item(checkedrows_list[0], 2).text()
-                price = itemtable.item(checkedrows_list[0], 3).text()
-                image = itemtable.item(checkedrows_list[0], 4).text()
-                cateURL = itemtable.item(checkedrows_list[0], 5).text()
-                tag = itemtable.item(checkedrows_list[0], 6).text()
-                self.id = itemtable.item(checkedrows_list[0], 7).text()
+                title = itemtable.item(checkedrows_list[0], 2).text()
+                cafe_address = itemtable.item(checkedrows_list[0], 1).text()
+                contents = itemtable.item(checkedrows_list[0], 3).text()
+                price = itemtable.item(checkedrows_list[0], 4).text()
+                image = itemtable.item(checkedrows_list[0], 5).text()
+                cateURL = itemtable.item(checkedrows_list[0], 6).text()
+                tag = itemtable.item(checkedrows_list[0], 7).text()
+                self.id = itemtable.item(checkedrows_list[0], 8).text()
 
                 self.editwindow.setID(self.id)
 
@@ -205,11 +152,19 @@ class MyWindow(QMainWindow, form_class):
                 self.editwindow.lineEdit_4.setText(cateURL)
                 self.editwindow.lineEdit.setText(tag)
                 self.editwindow.lineEdit_5.setText(image)
+                self.editwindow.lineEdit_6.setText(cafe_address)
 
                 self.editwindow.finished_Editing.connect(self.reload_table_data)
         else: 
             QMessageBox.information(self,'alert','수정할 게시글을 선택해 주세요')
-
+    def tag_count_check(self):
+        tags = self.lineEdit_7.text()
+        tag_list = tags.split(',')
+        print(tag_list)
+        if len(tag_list) > 10:
+           return False
+        else:
+            return True
 
     def getfullhtml(self,html):
         html_list = re.split('<img src="https:[^<>]*>', html)
@@ -244,22 +199,27 @@ class MyWindow(QMainWindow, form_class):
     def check_option(self):
         allow_comments = self.checkBox.isChecked()
         alarm_to_all = self.checkBox_2.isChecked()
-        searched = self.checkBox_3.isChecked()
+        CCL = self.checkBox_3.isChecked()
         phone_show = self.checkBox_5.isChecked()
-        naver_pay = self.checkBox_7.isChecked()
+        allow_cafe_share = self.checkBox_7.isChecked()
         use_disposable = self.checkBox_6.isChecked()
         allow_rightclick = self.checkBox_4.isChecked()
         keep_update = self.checkBox_9.isChecked()
+        naver_pay = self.checkBox_10.isChecked()
+        delete_post = self.checkBox_8.isChecked()
+        
 
         option_data = {
             "allow_comments":allow_comments,
             "alarm_to_all":alarm_to_all,
-            "searched":searched,
+            "CCL":CCL,
             "phone_show":phone_show,
-            "naver_pay":naver_pay,
+            "allow_cafe_share":allow_cafe_share,
             "use_disposable": use_disposable,
             "allow_rightclick": allow_rightclick,
-            "keep_update":keep_update
+            "keep_update":keep_update,
+            "naver_pay":naver_pay,
+            "delete_post":delete_post,
             }
 
         print(option_data)
@@ -267,54 +227,58 @@ class MyWindow(QMainWindow, form_class):
 
     def post(self):
         """글등록 데이터 naverposting의 post함수 연결  """
+        if self.in_progress == False:
+            rows = self.tableWidget.rowCount()
+             
+    
+            item_list = []
+            checked_rows = []
+            for row in range(rows):
+                # check if a row is checked 
+                checkbox =self.tableWidget.cellWidget(row,0).isChecked()
+                if checkbox == True:
+                    checked_rows.append(row)
 
-        rows = self.tableWidget.rowCount()
-
-        item_list = []
-        checked_rows = []
-        for row in range(rows):
-            # check if a row is checked 
-            checkbox =self.tableWidget.cellWidget(row,0).isChecked()
-            if checkbox == True:
-                checked_rows.append(row)
-
-
-        print(checkbox)
-        print(checked_rows)
-        
-
-
-        # 시간 설정 예외 처리
-        if checked_rows != []:
-            try:
-                interval = int(self.lineEdit_2.text())
-                print('대기시간: {}'.format(str(interval)))
-                # 반복작업체크                    
-                if self.checkBox_9.isChecked():
-                    try:
-                        total_interval = int(self.lineEdit_5.text())
-                    except:
-                        QMessageBox.information(self,'Alert!','반복작업을 체크하셨습니다. 전체 대기 시간을 설정해주세요.')
-                for row in checked_rows:
-                    option_data = self.check_option()
-                    row_data = self.get_all_rowitems(row)
-                    item_list.append(row_data)
-                print(option_data)
-                print(item_list)
+            # 시간 설정 예외 처리
+            if checked_rows != []:
                 try:
-                    if total_interval == 0:
-                        self.textBrowser.append('한 번 만 작업')
-                    self.t = Naver_Posting(self, self.driver, option_data, item_list, interval, total_interval)
-                    self.t.start()
-                    print('-------------------스레드 시작 --------------------------')
-                except:
-                    self.naver.driver.close()
-                    QMessageBox.information(self,'작업오류','작업오류')
-            except:
-                QMessageBox.information(self,"작업대기시간을 입력하세요","작업대기시간을 입력하세요")
-        else:
-            QMessageBox.information(self,"등록할 글을 선택해주세요","등록할 글을 선택해주세요")
+                    interval = int(self.lineEdit_2.text())
+                    print('대기시간: {}'.format(str(interval)))
 
+                    # 반복작업체크                    
+                    if self.checkBox_9.isChecked():
+                        try:
+                            total_interval = int(self.lineEdit_5.text())
+                            print('전체 대기 시간:{}'.format(str(total_interval)))
+                        except:
+                            QMessageBox.information(self,'Alert!','반복작업을 체크하셨습니다. 전체 대기 시간을 설정해주세요.')
+                    else:
+                        total_interval = 0
+
+                    for row in checked_rows:
+                        option_data = self.check_option()
+                        row_data = self.get_all_rowitems(row)
+                        item_list.append(row_data)
+                    print(option_data)
+                    try:
+                        if total_interval == 0:
+                            self.textBrowser.append('한 번 만 작업')
+                            print('한 번만 작업')
+                        self.t = Naver_Posting(self, self.driver, option_data, item_list, interval, total_interval)
+                        self.t.daemon = True
+                        self.t.start()
+                        self.in_progress = True
+                        print('-------------------스레드 시작 --------------------------')
+                    except:
+                        self.t.driver.close()
+                        QMessageBox.information(self,'작업오류','작업오류')
+                except:
+                    QMessageBox.information(self,"작업대기시간을 입력하세요","작업대기시간을 입력하세요")
+            else:
+                QMessageBox.information(self,"등록할 글을 선택해주세요","등록할 글을 선택해주세요")
+        else:
+            QMessageBox.information(self,'Alert','작업이 이미 진행중입니다.')
+    
     @pyqtSlot(object,str,str)
     def reload_naverposting(self,driver,ID,PW):
         """
@@ -330,8 +294,9 @@ class MyWindow(QMainWindow, form_class):
         conn = dbmodel()
         self.tableWidget = conn.load_data(self.tableWidget)
         # 게시글 테이블
-        self.tableWidget.setHorizontalHeaderLabels(["등록날짜","제목", "내용", "가격","대표이미지","카테고리URL",'태그','id'])
+        self.tableWidget.setHorizontalHeaderLabels(["등록날짜","카페주소","제목", "내용", "가격","대표이미지","메뉴명",'태그','id'])
         self.tableWidget.horizontalHeaderItem(0).setTextAlignment(Qt.AlignRight)
+        self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers) # edit 금지 모드
         conn.close()
         
     def get_all_rowitems(self,row):
@@ -346,12 +311,13 @@ class MyWindow(QMainWindow, form_class):
 
         itemlist = {
             "time":items[0],
-            "title":items[1],
-            "body":items[2],
-            "price":items[3],
-            "img":items[4],
-            "category":items[5],
-            "tag":items[6],
+            "address":items[1],
+            "title":items[2],
+            "body":items[3],
+            "price":items[4],
+            "img":items[5],
+            "category":items[6],
+            "tag":items[7],
             }
 
         print(itemlist)
@@ -379,19 +345,22 @@ class MyWindow(QMainWindow, form_class):
         c_time = self.getFormattedCurrentTime()
 
         time = c_time
-        categoryURL = self.lineEdit_3.text()
-        title = self.lineEdit.text()
-        price= self.lineEdit_6.text()
+        categoryURL = self.lineEdit_3.text().replace('\n','').lstrip().rstrip()
+        title = self.lineEdit.text().replace('\n','')
+        price= self.lineEdit_6.text().replace('\n','')
         tag = self.lineEdit_7.text()
         img = self.lineEdit_4.text()
         body = self.textEdit.toHtml()
-        ex = QUrl('http://pythonstudy.xyz/python/article/202-MySQL-%EC%BF%BC%EB%A6%AC')
+        address = self.lineEdit_8.text().replace('\n','')
+         
 
 
-        self.textEdit.loadResource(1,ex)
+         
 
         if title == '':
             QMessageBox.information(self,'Alert!!','제목은 필수항목입니다.')
+        elif address == '':
+            QMessageBox.information(self,'Alert!!','카페주소는 필수항목입니다.')
         elif body == '':
             QMessageBox.information(self,'Alert!!','내용은 필수항목입니다.')
         elif categoryURL == '0':
@@ -400,6 +369,8 @@ class MyWindow(QMainWindow, form_class):
             QMessageBox.information(self,"Alert!", '대표이미지는 필수항목입니다.')
         elif price == '':
             QMessageBox.information(self,'Alert!','판매가는 필수항목입니다.')
+        elif self.tag_count_check() == False:
+            QMessageBox.information(self,'Alert!','태그는 최대 10개까지 입력 가능합니다.')
         elif price != '':
             try:
                 int(price)
@@ -414,14 +385,27 @@ class MyWindow(QMainWindow, form_class):
                     "tag":tag,
                     "img":img,
                     "body":body,
+                    "address":address,
                     }
             
                 conn.add_item(itemlist)
                 QMessageBox.information(self,"Congrats!!",'게시글이 등록되었습니다!')
+                self.clear_form()
                 self.tableWidget.clearContents()
                 conn.load_data(self.tableWidget)
                 conn.close()
-                   
+    
+    def clear_form(self):
+        """
+        글 등록 후 모든 입력 폼 리셋
+        """               
+        self.lineEdit_3.clear()
+        self.lineEdit.clear()
+        self.lineEdit_6.clear()
+        self.lineEdit_7.clear() 
+        self.lineEdit_4.clear() 
+        self.textEdit.clear() 
+
     def del_item(self):
         """
         선택 아이템 삭제 
@@ -437,7 +421,7 @@ class MyWindow(QMainWindow, form_class):
                 delete_id_list  = []
 
                 for cheched_row in checkedrows_list:
-                    id_ = itemtable.item(cheched_row, 7).text()
+                    id_ = itemtable.item(cheched_row, 8).text()
                     delete_id_list.append(id_)
 
                 for delete_id in delete_id_list:
@@ -484,7 +468,9 @@ class MyWindow(QMainWindow, form_class):
                     time.sleep(0.1)
                     terminate_thread(self.t)
                     self.t.join()
-                self.textBrowser.append('작업종료')
+                self.textBrowser.append('<span style=\" font-size:8pt; font-weight:600; color:#ff0000;\" >작업종료</span>')
+                self.in_progress = False
+                QMessageBox.information(self,"Message","작업이 종료되었습니다.")
             except:
                 QMessageBox.information(self,"작업이 이미 중지 되었습니다.","작업이 이미 중지 되었습니다")
 
@@ -505,3 +491,5 @@ if __name__ == "__main__":
     myWindow = MyWindow()
     myWindow.show()
     app.exec_()
+    terminate_thread(myWindow.t)
+    myWindow.t.driver.close()

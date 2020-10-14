@@ -3,11 +3,20 @@ import time
 from PyQt5.QtCore import * 
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QMessageBox
-from selenium_python import get_driver_settings, smartproxy
+# from selenium_python import get_driver_settings, smartproxy
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions  import NoSuchWindowException
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+import sys, os
+from path_manager import resource_path
 # from fake_useragent import UserAgent
+# from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
+
 class Naverlogin(QtCore.QThread):
     # 로그인 작업이 끝나면 driver, ID, PW 를 반환 
-    finished = pyqtSignal(object,str,str,bool)
+    finished = pyqtSignal(object,str,str,int)
 
     def __init__(self):
         QThread.__init__(self)
@@ -17,13 +26,27 @@ class Naverlogin(QtCore.QThread):
         
         print('thread running..')
         self.ID
-        self.PW 
-        ua = UserAgent()
+        self.PW
+
+        # req_proxy = RequestProxy()
+        # proxies = req_proxy.get_proxy_list()
+        # PROXY = proxies[1].get_address()
+        # webdriver.DesiredCapabilities.CHROME['proxy']={
+        #     "httpProxy":PROXY,
+        #     "ftpProxy":PROXY,
+        #     "sslProxy":PROXY,
+            
+        #     "proxyType":"MANUAL",
+            
+        # }
+        # ua = UserAgent(verify_ssl=False)
         options = webdriver.ChromeOptions()
-        options.add_argument(str(ua.random))
-        #options.add_argument("headless")
-        print(smartproxy())
-        self.driver = webdriver.Chrome('chromedriver',options=options)
+        # print("random user-agent:{}".format(str(ua.random)))
+        # ua 일단 안 바꾸는 걸로.. npay 창 뜸...
+        # options.add_argument(f'user-agent={str(ua.random)}')
+        options.add_argument("headless")
+        # print(smartproxy())
+        self.driver = webdriver.Chrome(resource_path('./driver/chromedriver.exe'),options=options)
         url = 'https://nid.naver.com/nidlogin.login?mode=form&url=https%3A%2F%2Fwww.naver.com'
         # 네이버 로그인 url 접속
         self.driver.get(url)
@@ -34,16 +57,26 @@ class Naverlogin(QtCore.QThread):
         time.sleep(0.5)
         # 로그인 버튼을 찾아 클릭
         self.driver.find_element_by_xpath('//*[@id="log.login"]').click()
-       
-        try:
-            time.sleep(2)
-            self.driver.find_element_by_xpath('//*[@id="err_common"]')
-            login_ok = False
-            print('로그인 실패')
-        except:
-            login_ok = True 
 
-        self.finished.emit(self.driver,self.ID, self.PW, login_ok)
+        wait =WebDriverWait(self.driver,1)
+        try:
+            not_matched = wait.until(EC.presence_of_element_located((By.XPATH,'//*[@id="err_common"]')))
+            login_status = 0 
+        except TimeoutException:
+            pass
+
+        try:
+            captcha= wait.until(EC.presence_of_element_located((By.ID,'image_captcha')))
+            login_status = -1 
+        except TimeoutException:
+            pass  
+         
+        try:
+            print(login_status)
+        except:
+            login_status = 1 
+        
+        self.finished.emit(self.driver,self.ID, self.PW, login_status)
          
 
     def set_ID(self,ID):

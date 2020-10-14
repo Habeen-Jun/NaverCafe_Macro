@@ -9,14 +9,12 @@ from PyQt5.QtCore import Qt
 import time 
 from naverlogin import Naverlogin
 import threading
-from multiprocessing import Process
-from multiprocessing.pool import ThreadPool
 from PyQt5.QtWidgets import QDialog
-
+from path_manager import resource_path
 
 
 # Qtdesigner로 생성한 ui불러옴 
-login_class = uic.loadUiType("naverlogin.ui")[0]
+login_class = uic.loadUiType(resource_path("naverlogin.ui"))[0]
 
 
 class NaverLoginWindow(QMainWindow, login_class):
@@ -62,7 +60,7 @@ class NaverLoginWindow(QMainWindow, login_class):
                     pass
                 self.ID = ID
                 self.PW = PW
-                QMessageBox.information(self, 'congrats','로그인 성공')
+                # QMessageBox.information(self, 'congrats','로그인 성공')
             except:
                 QMessageBox.information(self, 'alert','로그인 실패')
             
@@ -70,16 +68,19 @@ class NaverLoginWindow(QMainWindow, login_class):
         self.switch_window.emit()
         print('메인 윈도우로~')
 
-    @pyqtSlot(object,str,str,bool)
-    def change_to_main(self,driver,ID,PW, login_ok):
+    @pyqtSlot(object,str,str,int)
+    def change_to_main(self,driver,ID,PW, login_status):
         self.driver = driver
         self.ID = ID
         self.PW = PW
-        self.login_ok = login_ok
-        if self.login_ok:
+        self.login_status = login_status
+        if self.login_status == 1:
             self.toMainWindow()
+            QMessageBox.information(self, 'congrats','로그인 성공')
+        elif self.login_status == 0:
+            QMessageBox.information(self,'','아이디와 비밀번호를 확인해주세요')
         else:
-            QMessageBox.information(self,'','로그인 실패')
+            QMessageBox.information(self,'','캡챠에 걸렸습니다. 잠시 후 시도해주세요')
         
         
 

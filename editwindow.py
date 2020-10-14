@@ -9,9 +9,9 @@ from PyQt5.QtGui import *
 import sys
 from dbmodel import dbmodel
 import time 
-
+from path_manager import resource_path
 # Qtdesigner로 생성한 ui불러옴 
-form_class = uic.loadUiType("editwindow.ui")[0]
+form_class = uic.loadUiType(resource_path("editwindow.ui"))[0]
         
 class Editwindow(QWidget, form_class):
 
@@ -22,6 +22,7 @@ class Editwindow(QWidget, form_class):
         self.setupUi(self)
         self.pushButton_2.clicked.connect(self.openimagefile)
         self.pushButton.clicked.connect(self.update_post)
+        self.lineEdit_5.setReadOnly(True)
 
     def keyPressEvent(self, e):
         print('keypressed')
@@ -48,15 +49,18 @@ class Editwindow(QWidget, form_class):
         게시글 수정
         """
         
-        title = self.lineEdit_2.text()
-        price = self.lineEdit_3.text() 
+        title = self.lineEdit_2.text().replace('\n','')
+        price = self.lineEdit_3.text().replace('\n','')
         contents = self.textEdit.toHtml()
-        cateURL = self.lineEdit_4.text()
+        cateURL = self.lineEdit_4.text().replace('\n','').lstrip().rstrip()
         tag = self.lineEdit.text()
         image = self.lineEdit_5.text()
+        cafe_address = self.lineEdit_6.text().replace('\n','')
 
         if title == '':
             QMessageBox.information(self,'Alert!!','제목은 필수항목입니다.')
+        elif cafe_address == '':
+            QMessageBox.information(self,'Alert!!','카페주소는 필수항목입니다.')
         elif contents == '':
             QMessageBox.information(self,'Alert!!','내용은 필수항목입니다.')
         elif cateURL == '0':
@@ -84,7 +88,7 @@ class Editwindow(QWidget, form_class):
                     'tag': tag,
                     'img': image,
                     'id': self.id, #게시물 ID 
-
+                    'cafe_address': cafe_address,
                 }
 
                 dbconn = dbmodel()

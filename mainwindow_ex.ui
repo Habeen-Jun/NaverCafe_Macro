@@ -33,64 +33,81 @@
         <item row="1" column="0">
          <widget class="QTabWidget" name="tabWidget">
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
             <string>Tab 1</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_9">
+            <item row="2" column="0" rowspan="2" colspan="2">
+             <widget class="QTextBrowser" name="textBrowser"/>
+            </item>
             <item row="0" column="3">
              <layout class="QVBoxLayout" name="verticalLayout"/>
             </item>
             <item row="0" column="0">
              <layout class="QGridLayout" name="gridLayout_7">
-              <item row="3" column="0">
-               <widget class="QCheckBox" name="checkBox_4">
-                <property name="text">
-                 <string>우클릭허용</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0">
+              <item row="1" column="0">
                <widget class="QCheckBox" name="checkBox">
                 <property name="text">
                  <string>댓글허용</string>
                 </property>
                </widget>
               </item>
-              <item row="1" column="0">
-               <widget class="QCheckBox" name="checkBox_2">
-                <property name="text">
-                 <string>전체알람</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QCheckBox" name="checkBox_3">
-                <property name="text">
-                 <string>검색됨</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
+              <item row="1" column="1">
                <widget class="QCheckBox" name="checkBox_5">
                 <property name="text">
                  <string>연락처 노출 동의</string>
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
+              <item row="3" column="1">
+               <widget class="QCheckBox" name="checkBox_4">
+                <property name="text">
+                 <string>마우스 오른쪽 버튼</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QCheckBox" name="checkBox_3">
+                <property name="text">
+                 <string>CCL</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
                <widget class="QCheckBox" name="checkBox_6">
                 <property name="text">
                  <string>일회용 번호 사용</string>
                 </property>
                </widget>
               </item>
-              <item row="2" column="1">
+              <item row="2" column="0">
+               <widget class="QCheckBox" name="checkBox_2">
+                <property name="text">
+                 <string>전체공개</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
                <widget class="QCheckBox" name="checkBox_7">
                 <property name="text">
-                 <string>네이버 페이</string>
+                 <string>블로그 /카페 공유</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QCheckBox" name="checkBox_10">
+                <property name="text">
+                 <string>네이버페이</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0" colspan="2">
+               <widget class="QLabel" name="label_15">
+                <property name="text">
+                 <string>사용 예시 영상 </string>
                 </property>
                </widget>
               </item>
@@ -112,10 +129,14 @@
                 </property>
                </widget>
               </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_5">
+                <property name="text">
+                 <string>로그삭제</string>
+                </property>
+               </widget>
+              </item>
              </layout>
-            </item>
-            <item row="2" column="0" rowspan="2" colspan="2">
-             <widget class="QTextBrowser" name="textBrowser"/>
             </item>
             <item row="0" column="1">
              <layout class="QGridLayout" name="gridLayout_3">
@@ -153,17 +174,17 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="0">
-               <widget class="QCheckBox" name="checkBox_8">
-                <property name="text">
-                 <string>게시글 시간설정</string>
-                </property>
-               </widget>
-              </item>
               <item row="1" column="2">
                <widget class="QLabel" name="label_11">
                 <property name="text">
                  <string>초</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QCheckBox" name="checkBox_8">
+                <property name="text">
+                 <string>중복 제거</string>
                 </property>
                </widget>
               </item>
@@ -209,33 +230,43 @@
                 </item>
                 <item row="1" column="0" rowspan="3">
                  <layout class="QGridLayout" name="gridLayout">
-                  <item row="0" column="0">
-                   <widget class="QLabel" name="label_8">
-                    <property name="text">
-                     <string>카테고리URL</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="2" column="0">
+                  <item row="3" column="0">
                    <widget class="QLabel" name="label_9">
                     <property name="text">
                      <string>태그</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="2" column="2">
+                  <item row="3" column="2">
                    <widget class="QLineEdit" name="lineEdit_7"/>
                   </item>
-                  <item row="1" column="2">
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_8">
+                    <property name="text">
+                     <string>메뉴명</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="2">
                    <widget class="QLineEdit" name="lineEdit_6"/>
                   </item>
-                  <item row="0" column="2">
+                  <item row="1" column="2">
                    <widget class="QLineEdit" name="lineEdit_3"/>
                   </item>
-                  <item row="1" column="0">
+                  <item row="2" column="0">
                    <widget class="QLabel" name="label_12">
                     <property name="text">
                      <string>판매가</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="2">
+                   <widget class="QLineEdit" name="lineEdit_8"/>
+                  </item>
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_14">
+                    <property name="text">
+                     <string>카페주소</string>
                     </property>
                    </widget>
                   </item>
@@ -254,7 +285,7 @@
                        <x>0</x>
                        <y>0</y>
                        <width>780</width>
-                       <height>332</height>
+                       <height>292</height>
                       </rect>
                      </property>
                      <layout class="QGridLayout" name="gridLayout_10">
@@ -381,6 +412,11 @@
                       <string>카페</string>
                      </property>
                     </column>
+                    <column>
+                     <property name="text">
+                      <string>새 행</string>
+                     </property>
+                    </column>
                    </widget>
                   </item>
                  </layout>
@@ -396,7 +432,7 @@
         <item row="0" column="0">
          <widget class="QLabel" name="label">
           <property name="text">
-           <string>중고폰나라 자동 포스팅기</string>
+           <string>N_AUTOPOSTING_BOT 1.0.5</string>
           </property>
          </widget>
         </item>
