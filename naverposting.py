@@ -173,6 +173,10 @@ class Naver_Posting(threading.Thread):
                     driver = self.driver
                     # url = 'https://cafe.naver.com/4uloveme?iframe_url=%2FArticleWrite.nhn%3Fclubid%3D23465858%26m%3Dwrite'
                     url = item['address']+'?iframe_url=%2FArticleWrite.nhn%3Fclubid%3D23465858%26m%3Dwrite'
+
+                    # 그린유즈 카테고리 예외 처리 |(파이프) -> ㅣ(알파벳 엘)
+                    if 'musicstar2' in item['address']:
+                        item['category'] = item['category'].replace('|','l')
                     
                     # Nosuchwindowexception 발생 시 예외 처리
                     try:
